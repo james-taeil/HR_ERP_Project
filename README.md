@@ -70,8 +70,17 @@ FR-002 사번은 채번 규칙에 따라 시스템이 자동 생성하고, 등�
 
 제품 수준 열린 질문 5개(데이터베이스, 모바일 앱, 경비 청구, 기관 신고 방식, AI 모델)와 도메인별 질문 41개가 각 스펙에 남아 있다. 설계 문서(`design.md`) 착수 전까지 닫으면 된다.
 
+## AI 에이전트와 함께 작업할 때
+
+이 프로젝트는 여러 AI 도구로 같이 작업하는 것을 전제한다. 규칙은 **`AGENTS.md` 한 곳**에 있다.
+
+- `AGENTS.md` — 공용 표준. Cursor, Codex, Copilot, Gemini CLI, Windsurf, Aider, Zed 등이 읽는다.
+- `CLAUDE.md` — Claude Code는 AGENTS.md를 읽지 않아서 `@AGENTS.md` 한 줄로 불러온다.
+- `.cursor/rules/spec-writing.mdc` — Cursor 전용. 스펙 문서를 편집할 때만 뜨는 확인 목록이다.
+
+규칙을 고칠 때는 `AGENTS.md`만 고친다. 같은 내용을 여러 파일에 두면 갈라진다.
+
 ## 그 밖의 파일
 
-- `.cursor/rules/` — SDD 워크플로와 스펙 작성 규칙. AI 에이전트가 이 프로젝트에서 따르는 규칙이다.
 - `archive-v1.0-요구사항정의서.md` — 병합 전 초안. 14개 모듈 122건 기준이라 현재 스펙과 구조가 다르다. 참고용으로만 남긴다.
 - `build-canvas.py` — 스펙에서 요구사항을 추출해 Cursor 캔버스를 생성한다. 추출 건수가 원본과 다르면 실패한다.
