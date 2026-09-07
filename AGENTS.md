@@ -116,6 +116,10 @@ hotfix/HR-901-mask-sensitive-data
 
 브랜치 이름의 에이전트 표기는 `CURSOR` 또는 `CODEX`를 사용한다. 문서·운영 규칙만 바꾸는 작업은 `docs/<TICKET>-<slug>`를 허용한다.
 
+### 단일 요청 자동화
+
+`agent:pair`와 `status:ready` 라벨이 붙은 GitHub Issue는 공동 작업 요청이다. Cursor가 먼저 구현하고 Codex가 검증·통합한다. 두 에이전트가 같은 기능을 중복 구현하지 않는다. 상태 전이와 예외 처리는 `.github/AI_AUTOMATION.md`를 따른다.
+
 ### 작업 흐름
 
 1. 작업 전에 GitHub Issue 또는 `tasks.md`에 티켓을 만든다.
