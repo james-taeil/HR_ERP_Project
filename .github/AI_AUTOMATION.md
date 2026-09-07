@@ -5,42 +5,42 @@
 ## 흐름
 
 1. 이슈 양식이 `agent:pair`, `status:ready` 라벨을 붙인다.
-2. `AI task router`가 이슈를 감지하고 `@Cursor`에게 구현을 요청한다.
-3. Cursor는 최신 `develop`에서 `feature/CURSOR-...` 브랜치를 만들고 PR을 연다.
-4. Codex 자동화가 `status:dispatched` 이슈와 연결된 PR을 확인한다.
-5. Codex는 스펙, diff, 테스트, 보안, 충돌을 검증한다.
-6. 통과한 PR만 `develop`에 squash merge한다.
+2. `AI task router`가 이슈를 감지해 Codex 구현 대기열에 등록한다.
+3. Codex는 최신 `develop`에서 `feature/CODEX-...` 브랜치를 만들고 구현·테스트한 뒤 PR을 연다.
+4. 라우터가 Codex PR을 감지하고 `@Cursor`에게 최종 검증과 병합을 요청한다.
+5. Cursor는 스펙, diff, 테스트, 보안, 회귀, 충돌을 최종 검증한다.
+6. 모든 검증을 통과한 PR만 Cursor가 `develop`에 squash merge한다.
 7. 배포 범위가 완성되면 `release/*`에서 전체 검증 후 `main`에 병합한다.
 
 ## 최초 1회 외부 연결
 
-### Cursor
-
-Cursor Dashboard에서 이 저장소의 GitHub 읽기·쓰기 권한을 허용한다. GitHub에서 `@Cursor` 멘션으로 Cloud Agent가 시작되도록 GitHub 연동을 활성화한다.
-
-라우터가 멘션을 남겼는데 Cursor가 반응하지 않으면 Cursor의 GitHub 연동 또는 Cloud Agent 사용 권한을 확인한다.
-
 ### Codex
 
-Codex에서는 이 저장소를 읽을 수 있는 GitHub 연결과 이 문서에 정의된 감시 자동화를 사용한다. Codex는 Cursor의 구현을 중복 구현하지 않고 기본적으로 검토와 통합을 담당한다.
+Codex에 이 저장소의 GitHub 읽기·쓰기 연결과 이 문서에 정의된 감시 자동화를 허용한다. Codex는 공동 작업 이슈의 구현, 테스트, PR 생성을 담당하며 자신이 만든 공동 작업 PR은 직접 병합하지 않는다.
+
+### Cursor
+
+Cursor Dashboard에서 이 저장소의 GitHub 읽기·쓰기 권한을 허용한다. GitHub의 PR 댓글에서 `@Cursor` 멘션으로 Cloud Agent가 시작되도록 GitHub 연동을 활성화한다.
+
+라우터가 멘션을 남겼는데 Cursor가 반응하지 않으면 Cursor의 GitHub 연동 또는 Cloud Agent 사용 권한을 확인한다.
 
 ## 상태
 
 | 라벨 | 의미 |
 |---|---|
-| `agent:pair` | Cursor 구현, Codex 검증·통합 |
+| `agent:pair` | Codex 구현, Cursor 최종 검증·병합 |
 | `agent:cursor` | Cursor 단독 |
 | `agent:codex` | Codex 단독 |
 | `status:ready` | 실행 대기 |
-| `status:dispatched` | AI 호출 완료 |
-| `status:review` | Codex 검토 대기 |
+| `status:dispatched` | Codex 구현 요청 완료 |
+| `status:review` | Cursor 최종 검토 대기 |
 | `status:blocked` | 사용자 판단 또는 외부 조치 필요 |
 
 ## 중복 실행 방지
 
-라우터는 이슈에 `<!-- ai-task-router -->` 표식이 있는지 확인한다. 같은 이슈가 다시 열리거나 라벨 이벤트가 반복되어도 Cursor 호출 댓글을 중복으로 만들지 않는다.
+라우터는 이슈의 `<!-- ai-task-router -->` 표식과 PR의 `<!-- cursor-final-review -->` 표식을 확인한다. 이슈가 다시 열리거나 PR이 갱신되어도 같은 호출 댓글을 중복 생성하지 않는다.
 
-Codex는 처리 전에 기존 PR, 댓글, 상태 라벨을 확인한다. 이미 처리한 이슈를 다시 실행하지 않는다.
+Codex는 처리 전에 기존 `feature/CODEX-` PR, 댓글, 상태 라벨을 확인한다. 이미 처리 중이거나 완료된 이슈를 다시 구현하지 않는다.
 
 ## 보안
 
