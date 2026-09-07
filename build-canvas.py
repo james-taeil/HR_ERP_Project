@@ -44,7 +44,6 @@ for key in TITLES:
         {
             "code": code,
             "name": TITLES[key],
-            "path": str(SPECS / key / "spec.md"),
             "groups": groups,
             "fr": sum(len(g["items"]) for g in groups),
             "ec": len(re.findall(r"^- \*\*EC-", text, re.M)),
@@ -92,7 +91,6 @@ type Group = { title: string; items: [string, string][] };
 type Domain = {
   code: string;
   name: string;
-  path: string;
   groups: Group[];
   fr: number;
   ec: number;

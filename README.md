@@ -83,4 +83,11 @@ FR-002 사번은 채번 규칙에 따라 시스템이 자동 생성하고, 등�
 ## 그 밖의 파일
 
 - `archive-v1.0-요구사항정의서.md` — 병합 전 초안. 14개 모듈 122건 기준이라 현재 스펙과 구조가 다르다. 참고용으로만 남긴다.
-- `build-canvas.py` — 스펙에서 요구사항을 추출해 Cursor 캔버스를 생성한다. 추출 건수가 원본과 다르면 실패한다.
+- `build-canvas.py` — 스펙에서 요구사항을 추출해 Cursor 캔버스를 생성한다. 추출 건수가 원본과 다르면 실패하므로, 스펙을 고친 뒤 다시 돌리면 누락 여부까지 확인된다.
+- `canvas/HR-ERP-requirements.canvas.tsx` — 284건을 도메인별로 접었다 펼쳐 보는 화면. **스펙에서 생성한 결과물이라 직접 고치지 않는다.** 스펙을 고쳤으면 아래를 다시 돌린다.
+
+```
+python3 build-canvas.py canvas/HR-ERP-requirements.canvas.tsx
+```
+
+Cursor에서 열려면 `~/.cursor/projects/<워크스페이스>/canvases/` 아래로 복사해야 한다. 저장소에 둔 사본은 공유와 열람용이다.
