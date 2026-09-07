@@ -9,10 +9,14 @@ on:
   workflow_dispatch:
   issues:
     types: [opened, reopened, labeled]
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: [develop]
 
 permissions:
   contents: read
   issues: write
+  pull-requests: write
 
 jobs:
   ensure-labels:
@@ -23,12 +27,12 @@ jobs:
         with:
           script: |
             const labels = [
-              ["agent:pair", "Cursor 구현 + Codex 검증", "6f42c1"],
+              ["agent:pair", "Codex 구현 + Cursor 최종 검증·병합", "6f42c1"],
               ["agent:cursor", "Cursor 단독 작업", "1d76db"],
               ["agent:codex", "Codex 단독 작업", "0e8a16"],
               ["status:ready", "작업 시작 가능", "fbca04"],
               ["status:dispatched", "AI에게 전달됨", "5319e7"],
-              ["status:review", "Codex 검토 대기", "d4c5f9"],
+              ["status:review", "Cursor 최종 검토 대기", "d4c5f9"],
               ["status:blocked", "사용자 판단 또는 외부 조치 필요", "b60205"]
             ];
             for (const [name, description, color] of labels) {
@@ -64,7 +68,7 @@ jobs:
       contains(github.event.issue.labels.*.name, 'status:ready')
     runs-on: ubuntu-latest
     steps:
-      - name: Notify Cursor and hand off to Codex queue
+      - name: Queue Codex implementation
         uses: actions/github-script@v7
         with:
           script: |
@@ -81,15 +85,15 @@ jobs:
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
                 body: `${marker}
-            @Cursor 이 이슈를 구현해 주세요.
+            Codex가 이 이슈를 구현합니다.
 
-            - 최신 \`develop\`에서 \`feature/CURSOR-<TICKET>-<slug>\` 브랜치를 만드세요.
-            - 이슈 범위와 AGENTS.md 규칙만 구현하세요.
-            - 테스트 후 \`develop\` 대상 PR을 만드세요.
-            - PR 본문에 이슈 번호, FR·AC, 테스트 결과와 남은 문제를 기록하세요.
-            - \`main\`에는 직접 병합하지 마세요.
+            - 최신 \`develop\`에서 \`feature/CODEX-<TICKET>-<slug>\` 브랜치를 만듭니다.
+            - 이슈 범위와 AGENTS.md 규칙만 구현합니다.
+            - 관련 테스트 후 \`develop\` 대상 PR을 만듭니다.
+            - PR 본문에 이슈 번호, FR·AC, 테스트 결과와 남은 문제를 기록합니다.
+            - Codex는 공동 작업 PR을 직접 병합하지 않습니다.
 
-            Codex는 생성된 PR을 스펙과 비교해 검증하고 통합합니다.`
+            Cursor가 생성된 PR을 최종 검증하고 병합합니다.`
               });
             }
             await github.rest.issues.removeLabel({
@@ -106,3 +110,38 @@ jobs:
               issue_number: context.issue.number,
               labels: ["status:dispatched"]
             });
+
+  request-cursor-review:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.draft == false &&
+      startsWith(github.event.pull_request.head.ref, 'feature/CODEX-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request final verification and merge from Cursor
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = "<!-- cursor-final-review -->";
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100
+            });
+            if (!comments.some(comment => comment.body?.includes(marker))) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `${marker}
+            @Cursor 이 PR을 최종 검증하고 병합해 주세요.
+
+            - 관련 spec의 FR·AC와 diff가 일치하는지 확인하세요.
+            - 테스트, 린트, 타입 검사, 빌드 중 존재하는 검사를 실행하세요.
+            - 보안·권한·회귀·충돌·비밀정보 포함 여부를 확인하세요.
+            - 하나라도 실패하면 병합하지 말고 수정 사항을 남기세요.
+            - 모두 통과하면 \`develop\`에 squash merge하세요.
+            - \`main\`에는 직접 병합하지 마세요.`
+              });
+            }
