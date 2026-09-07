@@ -1,0 +1,108 @@
+name: AI task router
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/ai-task-router.yml"
+      - ".github/ISSUE_TEMPLATE/ai-task.yml"
+  workflow_dispatch:
+  issues:
+    types: [opened, reopened, labeled]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  ensure-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure collaboration labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              ["agent:pair", "Cursor 구현 + Codex 검증", "6f42c1"],
+              ["agent:cursor", "Cursor 단독 작업", "1d76db"],
+              ["agent:codex", "Codex 단독 작업", "0e8a16"],
+              ["status:ready", "작업 시작 가능", "fbca04"],
+              ["status:dispatched", "AI에게 전달됨", "5319e7"],
+              ["status:review", "Codex 검토 대기", "d4c5f9"],
+              ["status:blocked", "사용자 판단 또는 외부 조치 필요", "b60205"]
+            ];
+            for (const [name, description, color] of labels) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name
+                });
+                await github.rest.issues.updateLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                  description,
+                  color
+                });
+              } catch (error) {
+                if (error.status !== 404) throw error;
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                  description,
+                  color
+                });
+              }
+            }
+
+  dispatch-pair:
+    if: >-
+      github.event_name == 'issues' &&
+      contains(github.event.issue.labels.*.name, 'agent:pair') &&
+      contains(github.event.issue.labels.*.name, 'status:ready')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Cursor and hand off to Codex queue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = "<!-- ai-task-router -->";
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100
+            });
+            if (!comments.some(comment => comment.body?.includes(marker))) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `${marker}
+            @Cursor 이 이슈를 구현해 주세요.
+
+            - 최신 \`develop\`에서 \`feature/CURSOR-<TICKET>-<slug>\` 브랜치를 만드세요.
+            - 이슈 범위와 AGENTS.md 규칙만 구현하세요.
+            - 테스트 후 \`develop\` 대상 PR을 만드세요.
+            - PR 본문에 이슈 번호, FR·AC, 테스트 결과와 남은 문제를 기록하세요.
+            - \`main\`에는 직접 병합하지 마세요.
+
+            Codex는 생성된 PR을 스펙과 비교해 검증하고 통합합니다.`
+              });
+            }
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              name: "status:ready"
+            }).catch(error => {
+              if (error.status !== 404) throw error;
+            });
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ["status:dispatched"]
+            });
