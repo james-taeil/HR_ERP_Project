@@ -1,8 +1,8 @@
 CREATE TABLE employee_number_sequences (
     sequence_year SMALLINT PRIMARY KEY,
-    last_value SMALLINT NOT NULL,
+    `last_value` SMALLINT NOT NULL,
     CONSTRAINT chk_employee_number_sequence_year CHECK (sequence_year BETWEEN 0 AND 99),
-    CONSTRAINT chk_employee_number_sequence_value CHECK (last_value BETWEEN 0 AND 9999)
+    CONSTRAINT chk_employee_number_sequence_value CHECK (`last_value` BETWEEN 0 AND 9999)
 );
 
 CREATE TABLE employees (

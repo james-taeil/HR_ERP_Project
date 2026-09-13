@@ -34,3 +34,11 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+tasks.register('recordUiFixture', JavaExec) {
+    group = 'verification'
+    description = 'Run a localhost-only record UI fixture against a disposable hr_record_test database'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.jamestaeil.hrerp.hr.record.RecordUiFixture'
+}
