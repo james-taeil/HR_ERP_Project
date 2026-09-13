@@ -49,4 +49,22 @@ class PendingPlatformPortsConfiguration {
     NotificationSender notificationSender() {
         return notification -> { throw new PlatformIntegrationUnavailableException(); };
     }
+
+    @Bean
+    @ConditionalOnMissingBean(AccountAccessScheduler.class)
+    AccountAccessScheduler accountAccessScheduler() {
+        return (employeeId, date) -> { throw new PlatformIntegrationUnavailableException(); };
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(LifecycleTaskPublisher.class)
+    LifecycleTaskPublisher lifecycleTaskPublisher() {
+        return task -> { throw new PlatformIntegrationUnavailableException(); };
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(OrganizationSnapshotReader.class)
+    OrganizationSnapshotReader organizationSnapshotReader() {
+        return (actorId, date) -> { throw new PlatformIntegrationUnavailableException(); };
+    }
 }

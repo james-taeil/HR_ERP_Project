@@ -14,7 +14,9 @@ public final class RecordViews {
                                   String phone, LocalDate hireDate, EmploymentType employmentType,
                                   long workplaceId, long departmentId, String position,
                                   LocalDate probationEndDate, boolean foreignWorker) {}
+    public record AppointmentSummary(long id, String effectiveDate, String type, String status,
+                                     String beforeValue, String afterValue, String reason) {}
     public record Card(EmployeeSummary employee, List<Entry> familyMembers, List<Entry> educations,
                        List<Entry> careers, List<Entry> certifications,
-                       List<Object> appointments, List<Object> contracts) {}
+                       List<AppointmentSummary> appointments, List<Object> contracts) {}
 }

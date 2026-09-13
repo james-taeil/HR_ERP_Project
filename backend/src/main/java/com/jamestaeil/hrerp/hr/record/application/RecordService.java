@@ -30,7 +30,7 @@ public class RecordService {
         var employee = records.employee(employeeId);
         var card = new Card(employee, records.list(employeeId, RecordKind.FAMILY),
             records.list(employeeId, RecordKind.EDUCATION), records.list(employeeId, RecordKind.CAREER),
-            records.list(employeeId, RecordKind.CERTIFICATION), List.of(), List.of());
+            records.list(employeeId, RecordKind.CERTIFICATION), records.appointments(employeeId), List.of());
         audit.viewed(actor, employeeId, "record");
         return card;
     }
