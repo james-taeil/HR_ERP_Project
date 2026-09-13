@@ -25,16 +25,16 @@ public class EmployeeNumberGenerator {
 		}
 
 		int year = hireDate.getYear() % 100;
-		jdbcClient.sql("INSERT IGNORE INTO employee_number_sequences (sequence_year, last_value) VALUES (:year, 0)")
+		jdbcClient.sql("INSERT IGNORE INTO employee_number_sequences (sequence_year, `last_value`) VALUES (:year, 0)")
 			.param("year", year)
 			.update();
 
-		int lastValue = jdbcClient.sql("SELECT last_value FROM employee_number_sequences WHERE sequence_year = :year FOR UPDATE")
+		int lastValue = jdbcClient.sql("SELECT `last_value` FROM employee_number_sequences WHERE sequence_year = :year FOR UPDATE")
 			.param("year", year)
 			.query(Integer.class)
 			.single();
 		int nextValue = nextSequence(lastValue, year);
-		jdbcClient.sql("UPDATE employee_number_sequences SET last_value = :nextValue WHERE sequence_year = :year")
+		jdbcClient.sql("UPDATE employee_number_sequences SET `last_value` = :nextValue WHERE sequence_year = :year")
 			.param("nextValue", nextValue)
 			.param("year", year)
 			.update();
