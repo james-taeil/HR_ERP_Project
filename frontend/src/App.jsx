@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import RecordCard from './features/employee/RecordCard.jsx'
+import LifecyclePanel from './features/employee/LifecyclePanel.jsx'
 import { buildRegistrationPayload, employmentTypes } from './features/employee/employeeForm.js'
 
 const initialForm = {
@@ -59,8 +60,9 @@ function App() {
       <nav className="actions" aria-label="인사관리 메뉴">
         <button type="button" aria-current={page === 'register' ? 'page' : undefined} onClick={() => setPage('register')}>사원 등록</button>
         <button type="button" aria-current={page === 'record' ? 'page' : undefined} onClick={() => setPage('record')}>인사기록카드</button>
+        <button type="button" aria-current={page === 'lifecycle' ? 'page' : undefined} onClick={() => setPage('lifecycle')}>재직·발령</button>
       </nav>
-      {page === 'record' ? <RecordCard /> : <>
+      {page === 'record' ? <RecordCard /> : page === 'lifecycle' ? <LifecyclePanel /> : <>
       <header>
         <p className="eyebrow">HR ERP · 인사관리</p>
         <h1>사원 등록</h1>

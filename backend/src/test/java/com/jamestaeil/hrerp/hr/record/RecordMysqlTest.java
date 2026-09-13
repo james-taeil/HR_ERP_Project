@@ -93,7 +93,7 @@ class RecordMysqlTest {
         var stats = emf.unwrap(SessionFactory.class).getStatistics();
         stats.clear();
         var card = service.card(employee);
-        assertEquals(5, stats.getPrepareStatementCount());
+        assertEquals(6, stats.getPrepareStatementCount());
         assertEquals(1, card.familyMembers().size());
         assertEquals(1, card.educations().size());
         assertEquals(1, card.careers().size());

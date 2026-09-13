@@ -129,7 +129,10 @@ export default function RecordCard() {
       </section>
       {recordSections.map(section => <RecordSection key={section.key} section={section}
         entries={card[section.key]} employeeId={card.employee.id} refresh={() => load(card.employee.id, true)} />)}
-      <section><h2>발령 이력</h2><p>아직 구현하지 않은 영역입니다.</p></section>
+      <section><h2>발령 이력</h2>{card.appointments.length === 0 ? <p>등록된 발령이 없습니다.</p> :
+        <ul className="record-list">{card.appointments.map(item => <li key={item.id}>
+          {item.effectiveDate} · {item.type} · {item.status}<br />{item.beforeValue} → {item.afterValue}<br />{item.reason}
+        </li>)}</ul>}</section>
       <section><h2>계약 이력</h2><p>아직 구현하지 않은 영역입니다.</p></section>
     </div>}
   </div>

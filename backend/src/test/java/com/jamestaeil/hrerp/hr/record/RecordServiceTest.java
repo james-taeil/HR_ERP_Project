@@ -92,12 +92,13 @@ class RecordServiceTest {
         verifyNoInteractions(records, claims, audit);
     }
 
-    @Test void cardReadsExactlyFourSectionsAndAuditsAccess() {
+    @Test void cardReadsRecordSectionsAndAppointmentsAndAuditsAccess() {
         for (RecordKind kind : RecordKind.values()) when(records.list(1, kind)).thenReturn(List.of());
         var card = service.card(1);
         assertTrue(card.appointments().isEmpty()); assertTrue(card.contracts().isEmpty());
         verify(records).employee(1);
         for (RecordKind kind : RecordKind.values()) verify(records).list(1, kind);
+        verify(records).appointments(1);
         verifyNoMoreInteractions(records);
         verify(audit).viewed(9, 1, "record");
     }

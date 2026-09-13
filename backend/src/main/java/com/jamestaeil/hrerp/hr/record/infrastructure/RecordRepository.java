@@ -38,6 +38,18 @@ public class RecordRepository {
             .setParameter("employeeId", employeeId).getResultList().stream().map(OwnedRecord::view).toList();
     }
 
+    public List<AppointmentSummary> appointments(long employeeId) {
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = em.createNativeQuery("""
+            SELECT id, effective_date, appointment_type, appointment_status,
+                CONCAT(before_workplace_id, '/', before_department_id, '/', before_position_name, '/', before_employment_status),
+                CONCAT(after_workplace_id, '/', after_department_id, '/', after_position_name, '/', after_employment_status), reason
+            FROM appointments WHERE employee_id = :employeeId ORDER BY effective_date, id
+            """).setParameter("employeeId", employeeId).getResultList();
+        return rows.stream().map(row -> new AppointmentSummary(((Number) row[0]).longValue(), row[1].toString(),
+            row[2].toString(), row[3].toString(), row[4].toString(), row[5].toString(), row[6].toString())).toList();
+    }
+
     public Entry get(long employeeId, RecordKind kind, long id) {
         return owned(employeeId, kind, id).view();
     }
