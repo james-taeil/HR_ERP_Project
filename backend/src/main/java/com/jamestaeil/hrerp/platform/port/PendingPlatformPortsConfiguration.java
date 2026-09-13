@@ -43,4 +43,10 @@ class PendingPlatformPortsConfiguration {
 	OrganizationReader organizationReader() {
 		return (workplaceId, departmentId) -> { throw new PlatformIntegrationUnavailableException(); };
 	}
+
+    @Bean
+    @ConditionalOnMissingBean(NotificationSender.class)
+    NotificationSender notificationSender() {
+        return notification -> { throw new PlatformIntegrationUnavailableException(); };
+    }
 }
