@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './App.css'
+import RecordCard from './features/employee/RecordCard.jsx'
 import { buildRegistrationPayload, employmentTypes } from './features/employee/employeeForm.js'
 
 const initialForm = {
@@ -20,6 +21,7 @@ function Field({ label, name, error, children, ...props }) {
 }
 
 function App() {
+  const [page, setPage] = useState('register')
   const [form, setForm] = useState(initialForm)
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID())
   const [message, setMessage] = useState('')
@@ -54,6 +56,11 @@ function App() {
 
   return (
     <main>
+      <nav className="actions" aria-label="인사관리 메뉴">
+        <button type="button" aria-current={page === 'register' ? 'page' : undefined} onClick={() => setPage('register')}>사원 등록</button>
+        <button type="button" aria-current={page === 'record' ? 'page' : undefined} onClick={() => setPage('record')}>인사기록카드</button>
+      </nav>
+      {page === 'record' ? <RecordCard /> : <>
       <header>
         <p className="eyebrow">HR ERP · 인사관리</p>
         <h1>사원 등록</h1>
@@ -96,6 +103,7 @@ function App() {
         <button type="submit" disabled={busy}>{busy ? '등록 중…' : '사원 등록'}</button>
         <p className="status" aria-live="polite">{message}</p>
       </form>
+      </>}
     </main>
   )
 }
