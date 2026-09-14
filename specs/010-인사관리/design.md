@@ -1,6 +1,6 @@
-# Design: 010 인사관리 FR-001~009
+# Design: 010 인사관리 FR-001~016
 
-> 근거: `specs/010-인사관리/spec.md` FR-001~009, AC-001~009  
+> 근거: `specs/010-인사관리/spec.md` FR-001~016, AC-001~016
 > 상위 설계: `specs/000-product/design.md`  
 > 상태: 구현 전 상세 설계
 
@@ -134,7 +134,7 @@ Employee가 등록 흐름의 애그리거트 루트다.
 
 `GET /api/hr/employees/{employeeId}/record`
 
-한 응답에 employee, familyMembers, educations, careers, certifications, appointments, contracts 일곱 영역을 반환한다. 구현되지 않은 발령·계약 영역도 빈 배열과 안정된 필드 형태를 반환하되 해당 기능이 완료됐다고 판정하지 않는다.
+한 응답에 employee, familyMembers, educations, careers, certifications, appointments, contracts 일곱 영역을 반환한다. 발령은 적용·예약 이력을 반환하고, 아직 구현되지 않은 계약 영역은 빈 배열과 안정된 필드 형태로 반환하되 해당 기능이 완료됐다고 판정하지 않는다.
 
 ### 6.3 부속정보
 
@@ -144,6 +144,23 @@ Employee가 등록 흐름의 애그리거트 루트다.
 - `POST /api/hr/employees/{id}/certifications`
 
 수정 API는 employeeNumber를 입력으로 받지 않는다. Entity 대신 Request/Response DTO를 사용한다.
+
+#### T-010-007~010 상세 계약 (2026-09-11)
+
+- 위 네 경로의 GET은 해당 사원의 부속정보를 ID 오름차순 배열로 반환한다. PUT `/{recordId}`는 전체 필드 교체이며 다른 사원 소유의 ID는 404로 거부한다.
+- POST/PUT 본문은 `{idempotencyKey, version, data}`다. POST의 version은 생략, PUT은 조회한 version이 필수다. 성공 응답은 `{id, version}`이며 POST 201, PUT 200이다. 응답 후 통합 조회로 최신 내용을 받는다.
+- 멱등 키는 인증된 호출자별로 격리한다. 같은 키로 다른 사원·종류·수정 대상을 지정하면 409이며, 같은 대상 재시도에는 최초 id/version을 반환한다. 원문 입력값을 멱등 저장소에 복제하지 않는다.
+- 각 부속정보의 version으로 오래된 수정과 동시 수정 충돌을 409로 거부한다. 키 점유·저장·감사·결과 기록은 같은 트랜잭션에서 성공하거나 롤백한다.
+- 가족의 네 boolean은 필수 입력이다. deductionEligible은 담당자가 입력한 판정값을 보존하며 dependent만으로 세법상 공제 여부를 추정하지 않는다.
+- 학력·경력 종료일과 자격 만료일은 선택값이며 시작/취득일과 같은 날을 허용한다(4.3 및 초기 DB 제약과 일치).
+- 증빙 ID가 있으면 900 FileStorage에서 호출자·사원 소유/접근권한 및 안전검사 완료를 확인한다. 미연결이면 503으로 저장을 거부한다. 파일이 없는 등록은 허용한다.
+- CurrentActorProvider, AuthorizationChecker, RecordAudit 포트는 조회/수정마다 호출한다. 권한은 대상 employeeId와 READ/WRITE로 판정하며 본인 수정 요청 승인 흐름은 구현하지 않는다. 감사 포트는 같은 트랜잭션의 삽입 전용 저장을 요구하고 실패 시 업무도 실패한다. 운영용 허용 대역은 만들지 않는다.
+- 통합 조회는 직원 기본정보 projection 1회, 부속정보 4회, 발령 1회로 구성한다. 외국인등록번호/암호문을 읽거나 응답하지 않는다. 계약은 빈 배열이며 미구현임을 화면에 표시한다.
+- 삭제 API/자동 파기는 제공하지 않는다. 사원 FK의 RESTRICT를 유지하며 Q-900-7 보존 정책 확정 전에는 물리 삭제하지 않는다.
+
+근거: FR-003~006, EC-007, P-5/P-6, NFR-007, 900 파일 안전검사·감사 실패 시 업무 실패 및 쓰기 멱등 원칙을 기존 설계에 구체화한다. 실제 플랫폼 연결·MySQL 성능 검증은 별도로 완료를 판정한다.
+
+2026-09-12 통합 검증 보정: 빈 MySQL 8.4에서 V1의 `last_value` 예약어 구문 오류가 재현되었다. 최초 마이그레이션 자체가 실패하므로 후속 V3로 복구할 수 없다. V1과 채번 SQL에서 해당 식별자를 인용하여 의미를 유지한다. 이미 별도 환경에 적용한 V1이 있다면 체크섬 영향 검토가 필요하며 자동 `repair`나 사용자 DB 초기화를 수행하지 않는다.
 
 ## 7. 등록 트랜잭션
 
@@ -194,6 +211,8 @@ FR-001의 등록과 체크리스트, FR-038의 이벤트는 같은 트랜잭션�
 
 알림 기준일은 설정 가능한 코드 테이블이 아니라 현재 확정된 요구사항 수치로 사용한다. 재실행 시 reminder_type, employee_id, target_id, due_date의 고유 제약으로 중복 발송을 막는다. 외부 이메일·문자와 메시지 브로커는 도입하지 않는다.
 
+동시 실행은 MySQL named lock `hr_reminder_batch`로 직렬화하고, 알림 생성과 `reminder_deliveries` 기록은 한 트랜잭션에서 처리한다. `NotificationSender` 구현도 호출 트랜잭션에 참여해야 하며 실패하면 전달 기록을 함께 롤백해 다음 실행에서 재시도한다. 자격 알림의 target_id는 자격 ID, 수습·체류 알림의 target_id는 사원 ID다. 자격의 본인·인사 담당자 알림은 별도 reminder_type으로 저장한다. 실제 수신자 해석과 알림 저장소는 900 플랫폼 연결 전까지 완료로 판정하지 않는다.
+
 ## 10. 개인정보와 로그
 
 외국인등록번호는 AES-256-GCM 같은 인증 암호 방식으로 저장하고 키는 환경 설정 또는 비밀 저장소에서 주입한다. 실제 키, 원문, 복호화 결과를 로그·예외·감사 payload에 기록하지 않는다. 일반 응답에는 마스킹 값만 제공하고 원문 조회 API는 FR-029~031과 권한 기반이 준비될 때까지 만들지 않는다.
@@ -221,3 +240,29 @@ FR-001의 등록과 체크리스트, FR-038의 이벤트는 같은 트랜잭션�
 | AC-009 | 외국인 조건부 필수값과 체류 만료 60일 전 알림 |
 | 사번 동시성 | 같은 해 동시 등록에서 중복 0건 |
 | 보안 | DB·로그·API 일반 응답에서 등록번호 평문 0건 |
+
+## 13. 재직 상태와 발령
+
+재직 상태는 `ACTIVE`, `ON_LEAVE`, `SUSPENDED`, `TERMINATED` 네 코드다. 허용 전이는 `ACTIVE → ON_LEAVE/SUSPENDED/TERMINATED`, `ON_LEAVE/SUSPENDED → ACTIVE/TERMINATED`이며 `TERMINATED`에서는 전이할 수 없다. 퇴사 전이는 퇴사 API만 생성한다.
+
+발령은 `DEPARTMENT_CHANGE`, `WORKPLACE_CHANGE`, `POSITION_CHANGE`, `STATUS_CHANGE` 네 종류다. 한 행에 적용일, 종류, 변경 전후의 사업장·부서·직위·재직 상태 전체 스냅샷, 사유, 근거 fileId, `SCHEDULED/APPLIED` 상태를 저장한다. 미래 적용일은 예약하고 과거·당일은 즉시 적용한다. 한 사원에게 미적용 예약 발령은 한 건만 허용해 예약 사이의 기준값 모호성을 막는다.
+
+예약 적용 배치는 매일 00:00 Asia/Seoul에 `effective_date <= 오늘`인 미적용 발령을 ID 순서로 찾는다. MySQL named lock과 행 잠금, `SCHEDULED → APPLIED` 조건 갱신으로 재실행·동시 실행 중복 적용을 막는다. 실패한 트랜잭션은 다음 실행에서 다시 처리한다.
+
+## 14. 퇴사
+
+퇴사 확정은 퇴사일, 사유 코드, 이직확인서 필요 여부를 저장하고 같은 트랜잭션에서 퇴사 상태 발령, 네 항목의 정산 체크리스트, 연차·보험 상실·퇴직소득·물품 반납 과제를 만든다. 계정 차단 요청일은 퇴사일 다음 날이다. 실제 계정 차단과 도메인 과제 저장은 900 플랫폼 포트가 담당하며 포트 실패 시 퇴사 확정도 롤백한다. 재입사는 Q-010-1 확정 전까지 제공하지 않는다.
+
+## 15. 기준일 조직도와 정원·현원
+
+조직 트리와 부서별 정원은 900 조직 포트에서 기준일 스냅샷으로 읽고 인사 DB에 복제하지 않는다. 사원 소속과 상태는 적용된 발령의 전후 스냅샷으로 기준일 값을 재구성한다. 현원은 기준일에 입사했고 `ACTIVE`인 사원만 포함하므로 휴직·정직·퇴사자는 제외한다. 응답에는 기준일, 부서 ID, 정원, 현원, 차이를 함께 반환한다.
+
+## 16. FR-010~016 API
+
+- `POST /api/hr/employees/{id}/appointments`: 발령 등록
+- `GET /api/hr/employees/{id}/appointments`: 발령 이력
+- `POST /api/hr/employees/{id}/termination`: 퇴사 확정
+- `GET /api/hr/organization-chart?date=YYYY-MM-DD`: 기준일 조직도
+- `GET /api/hr/headcount?date=YYYY-MM-DD`: 기준일 정원·현원
+
+모든 쓰기는 호출자별 멱등 키와 사원 행 잠금을 사용한다. 권한·조직·파일·감사·계정·과제 포트는 fail-closed이며 900 실제 구현 연결 전에는 운영 완료로 판정하지 않는다.
