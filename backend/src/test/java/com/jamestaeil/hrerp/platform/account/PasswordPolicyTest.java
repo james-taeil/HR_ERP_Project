@@ -10,13 +10,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 class PasswordPolicyTest {
 	private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(4);
+	private final PasswordPolicy policy = new PasswordPolicy(12, 5);
 
 	@Test
 	void requiresTwelveCharacters() {
 		assertThrows(IllegalArgumentException.class,
-			() -> PasswordPolicy.validate("short-pass", List.of(), encoder));
+			() -> policy.validate("short-pass", List.of(), encoder));
 		assertDoesNotThrow(
-			() -> PasswordPolicy.validate("twelve-chars!", List.of(), encoder));
+			() -> policy.validate("twelve-chars!", List.of(), encoder));
 	}
 
 	@Test
@@ -30,8 +31,18 @@ class PasswordPolicyTest {
 			encoder.encode("older-allowed!")
 		);
 		assertThrows(IllegalArgumentException.class,
-			() -> PasswordPolicy.validate("previous-04!", history, encoder));
+			() -> policy.validate("previous-04!", history, encoder));
 		assertDoesNotThrow(
-			() -> PasswordPolicy.validate("older-allowed!", history, encoder));
+			() -> policy.validate("older-allowed!", history, encoder));
+	}
+
+	@Test
+	void appliesConfiguredMinimumLengthAndHistoryLimit() {
+		PasswordPolicy configured = new PasswordPolicy(4, 1);
+		List<String> history = List.of(encoder.encode("last"), encoder.encode("older"));
+
+		assertThrows(IllegalArgumentException.class, () -> configured.validate("abc", List.of(), encoder));
+		assertThrows(IllegalArgumentException.class, () -> configured.validate("last", history, encoder));
+		assertDoesNotThrow(() -> configured.validate("older", history, encoder));
 	}
 }

@@ -2,6 +2,7 @@ package com.jamestaeil.hrerp.platform.account;
 
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Objects;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -49,14 +50,31 @@ class AccountEntity {
 	}
 
 	void changeStatus(AccountStatus status, Instant now) {
+		Objects.requireNonNull(status, "status is required");
+		if (status == AccountStatus.LOCKED) {
+			throw new IllegalArgumentException("잠금 상태에는 만료 시각이 필요합니다.");
+		}
 		this.accountStatus = status;
 		this.disabledAt = status == AccountStatus.DISABLED ? now : null;
+		this.lockedUntil = null;
+		this.updatedAt = now;
+	}
+
+	void lockUntil(Instant until, Instant now) {
+		if (until == null || !until.isAfter(now)) {
+			throw new IllegalArgumentException("잠금 만료 시각은 현재보다 이후여야 합니다.");
+		}
+		this.accountStatus = AccountStatus.LOCKED;
+		this.lockedUntil = until;
+		this.disabledAt = null;
 		this.updatedAt = now;
 	}
 
 	Long id() { return id; }
 	String passwordHash() { return passwordHash; }
 	AccountStatus status() { return accountStatus; }
+	Instant lockedUntil() { return lockedUntil; }
+	Instant disabledAt() { return disabledAt; }
 
 	static String normalize(String username) {
 		if (username == null || username.isBlank()) throw new IllegalArgumentException("username is required");
