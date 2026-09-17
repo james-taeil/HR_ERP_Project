@@ -1,5 +1,6 @@
 package com.jamestaeil.hrerp.platform.account;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -27,13 +28,14 @@ class AccountServiceTest {
 
 	@Mock AccountRepository accounts;
 	@Mock PasswordHistoryRepository history;
+	@Mock SessionRepository sessions;
 	private BCryptPasswordEncoder encoder;
 	private AccountService service;
 
 	@BeforeEach
 	void setup() {
 		encoder = new BCryptPasswordEncoder(4);
-		service = new AccountService(accounts, history, encoder, new PasswordPolicy(12, 5),
+		service = new AccountService(accounts, history, encoder, new PasswordPolicy(12, 5), sessions,
 			Clock.fixed(NOW, ZoneOffset.UTC));
 	}
 
@@ -64,5 +66,16 @@ class AccountServiceTest {
 		assertThrows(IllegalArgumentException.class, () -> service.changePassword(42L, "reused-pass!"));
 
 		verify(accounts).findById(42L);
+	}
+
+	@Test
+	void disablingAccountRevokesEverySessionInTheSameOperation() {
+		AccountEntity account = new AccountEntity(7L, "worker", encoder.encode("current-pass!"), NOW);
+		when(accounts.findById(42L)).thenReturn(Optional.of(account));
+
+		service.changeStatus(42L, AccountStatus.DISABLED);
+
+		assertEquals(AccountStatus.DISABLED, account.status());
+		verify(sessions).revokeAllByAccountId(42L, NOW);
 	}
 }

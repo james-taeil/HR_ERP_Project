@@ -15,14 +15,16 @@ public class AccountService {
 	private final PasswordHistoryRepository history;
 	private final PasswordEncoder encoder;
 	private final PasswordPolicy passwordPolicy;
+	private final SessionRepository sessions;
 	private final Clock clock;
 
 	public AccountService(AccountRepository accounts, PasswordHistoryRepository history, PasswordEncoder encoder,
-			PasswordPolicy passwordPolicy, Clock clock) {
+			PasswordPolicy passwordPolicy, SessionRepository sessions, Clock clock) {
 		this.accounts = accounts;
 		this.history = history;
 		this.encoder = encoder;
 		this.passwordPolicy = passwordPolicy;
+		this.sessions = sessions;
 		this.clock = clock;
 	}
 
@@ -54,9 +56,11 @@ public class AccountService {
 
 	@Transactional
 	public void changeStatus(long accountId, AccountStatus status) {
-		accounts.findById(accountId)
-			.orElseThrow(() -> new IllegalArgumentException("계정을 찾을 수 없습니다."))
-			.changeStatus(status, clock.instant());
+		AccountEntity account = accounts.findById(accountId)
+			.orElseThrow(() -> new IllegalArgumentException("계정을 찾을 수 없습니다."));
+		Instant now = clock.instant();
+		account.changeStatus(status, now);
+		if (status == AccountStatus.DISABLED) sessions.revokeAllByAccountId(accountId, now);
 	}
 
 	@Transactional
