@@ -62,7 +62,7 @@ CREATE TABLE platform_roles (
 CREATE TABLE platform_permissions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     permission_code VARCHAR(150) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    sensitive BOOLEAN NOT NULL DEFAULT FALSE,
+    sensitive_operation BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT uk_platform_permissions_code UNIQUE (permission_code)
 );
 
