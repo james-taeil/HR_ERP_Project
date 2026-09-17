@@ -41,4 +41,12 @@ jobs:
           HR_RECORD_MYSQL_TEST_URL: jdbc:mysql://127.0.0.1:3306/hr_record_test?useSSL=false&allowPublicKeyRetrieval=true
           HR_RECORD_MYSQL_TEST_USER: root
           HR_RECORD_MYSQL_TEST_PASSWORD: ""
-        run: bash gradlew clean test build
+        run: bash gradlew clean test build --stacktrace --info
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: |
+            backend/build/test-results/test
+            backend/build/reports/tests/test
