@@ -40,4 +40,20 @@ class AccountEntityTest {
 		assertThrows(IllegalArgumentException.class,
 			() -> account.lockUntil(NOW, NOW));
 	}
+
+	@Test
+	void locksAfterConfiguredFailuresAndUnlocksAfterExpiry() {
+		AccountEntity account = new AccountEntity(7L, "worker", "bcrypt-hash", NOW);
+		AuthenticationPolicy policy = new AuthenticationPolicy(2, java.time.Duration.ofMinutes(15));
+
+		account.recordAuthenticationFailure(policy, NOW);
+		assertEquals(1, account.failedAttempts());
+		account.recordAuthenticationFailure(policy, NOW.plusSeconds(1));
+		assertEquals(AccountStatus.LOCKED, account.status());
+
+		assertEquals(false, account.prepareForAuthentication(NOW.plusSeconds(899)));
+		assertEquals(true, account.prepareForAuthentication(NOW.plusSeconds(901)));
+		assertEquals(AccountStatus.ACTIVE, account.status());
+		assertEquals(0, account.failedAttempts());
+	}
 }
