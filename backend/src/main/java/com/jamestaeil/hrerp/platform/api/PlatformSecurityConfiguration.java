@@ -10,8 +10,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
-import org.springframework.security.web.util.matcher.OrRequestMatcher;
 
 import com.jamestaeil.hrerp.platform.account.SessionService;
 
@@ -37,12 +35,18 @@ class PlatformSecurityConfiguration {
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.csrf(csrf -> csrf
 				.csrfTokenRepository(csrfTokens)
-				.requireCsrfProtectionMatcher(new OrRequestMatcher(
-					PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/platform/auth/logout"),
-					PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/api/platform/auth/logout-all"))))
+				.requireCsrfProtectionMatcher(request -> {
+					String method = request.getMethod();
+					boolean unsafe = !("GET".equals(method) || "HEAD".equals(method)
+						|| "OPTIONS".equals(method) || "TRACE".equals(method));
+					return unsafe && request.getRequestURI().startsWith("/api/")
+						&& !request.getRequestURI().equals("/api/platform/auth/login");
+				}))
 			.authorizeHttpRequests(authorize -> authorize
 				.requestMatchers(HttpMethod.POST, "/api/platform/auth/login").permitAll()
 				.requestMatchers("/api/platform/auth/**").authenticated()
+				.requestMatchers("/api/platform/roles/**", "/api/platform/permissions",
+					"/api/platform/accounts/**", "/api/hr/**").authenticated()
 				.anyRequest().permitAll())
 			.exceptionHandling(errors -> errors.authenticationEntryPoint(
 				(request, response, exception) -> response.sendError(401)))
