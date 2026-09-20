@@ -70,9 +70,39 @@ class AccountEntity {
 		this.updatedAt = now;
 	}
 
+	boolean prepareForAuthentication(Instant now) {
+		if (accountStatus == AccountStatus.LOCKED && lockedUntil != null && !lockedUntil.isAfter(now)) {
+			accountStatus = AccountStatus.ACTIVE;
+			failedAttempts = 0;
+			lockedUntil = null;
+			updatedAt = now;
+		}
+		return accountStatus == AccountStatus.ACTIVE;
+	}
+
+	void recordAuthenticationFailure(AuthenticationPolicy policy, Instant now) {
+		if (accountStatus != AccountStatus.ACTIVE) return;
+		failedAttempts++;
+		if (failedAttempts >= policy.maxFailedAttempts()) {
+			lockUntil(now.plus(policy.lockDuration()), now);
+		} else {
+			updatedAt = now;
+		}
+	}
+
+	void recordAuthenticationSuccess(Instant now) {
+		failedAttempts = 0;
+		lockedUntil = null;
+		accountStatus = AccountStatus.ACTIVE;
+		updatedAt = now;
+	}
+
 	Long id() { return id; }
+	long employeeId() { return employeeId; }
+	String username() { return username; }
 	String passwordHash() { return passwordHash; }
 	AccountStatus status() { return accountStatus; }
+	int failedAttempts() { return failedAttempts; }
 	Instant lockedUntil() { return lockedUntil; }
 	Instant disabledAt() { return disabledAt; }
 

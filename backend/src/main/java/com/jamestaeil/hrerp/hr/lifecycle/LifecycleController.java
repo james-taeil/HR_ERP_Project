@@ -6,6 +6,7 @@ import com.jamestaeil.hrerp.hr.employee.api.ApiError;
 import com.jamestaeil.hrerp.hr.lifecycle.LifecycleService.AppointmentCommand;
 import com.jamestaeil.hrerp.hr.lifecycle.LifecycleService.TerminationCommand;
 import com.jamestaeil.hrerp.platform.port.PlatformIntegrationUnavailableException;
+import com.jamestaeil.hrerp.platform.port.RecordAccessForbiddenException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -76,7 +77,7 @@ class LifecycleExceptionHandler {
     ResponseEntity<ApiError> conflict() { return error(409, "LIFECYCLE_CONFLICT", "Reload before changing lifecycle data"); }
     @ExceptionHandler(LifecycleNotFoundException.class)
     ResponseEntity<ApiError> notFound() { return error(404, "EMPLOYEE_NOT_FOUND", "Employee not found"); }
-    @ExceptionHandler(LifecycleForbiddenException.class)
+    @ExceptionHandler({LifecycleForbiddenException.class, RecordAccessForbiddenException.class})
     ResponseEntity<ApiError> forbidden() { return error(403, "FORBIDDEN", "Lifecycle access is forbidden"); }
     @ExceptionHandler(PlatformIntegrationUnavailableException.class)
     ResponseEntity<ApiError> unavailable() { return error(503, "PLATFORM_UNAVAILABLE", "Platform validation is unavailable"); }
