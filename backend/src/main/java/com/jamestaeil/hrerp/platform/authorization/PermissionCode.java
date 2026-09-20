@@ -2,6 +2,7 @@ package com.jamestaeil.hrerp.platform.authorization;
 
 public enum PermissionCode {
 	PLATFORM_AUTHORIZATION_MANAGE,
+	PLATFORM_ORGANIZATION_MANAGE,
 	HR_EMPLOYEE_REGISTER,
 	HR_RECORD_READ,
 	HR_RECORD_WRITE,
