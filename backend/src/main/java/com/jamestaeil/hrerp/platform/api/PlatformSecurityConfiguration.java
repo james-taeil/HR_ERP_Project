@@ -47,7 +47,9 @@ class PlatformSecurityConfiguration {
 				.requestMatchers("/api/platform/auth/**").authenticated()
 				.requestMatchers("/api/platform/roles/**", "/api/platform/permissions",
 					"/api/platform/accounts/**", "/api/platform/companies/**",
-					"/api/platform/workplaces/**", "/api/platform/departments/**", "/api/hr/**").authenticated()
+					"/api/platform/workplaces/**", "/api/platform/departments/**",
+					"/api/platform/code-groups/**", "/api/platform/codes/**",
+					"/api/platform/annual-settings/**", "/api/hr/**").authenticated()
 				.anyRequest().permitAll())
 			.exceptionHandling(errors -> errors.authenticationEntryPoint(
 				(request, response, exception) -> response.sendError(401)))
