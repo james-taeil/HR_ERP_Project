@@ -45,6 +45,7 @@ public class AuthenticationService {
 		boolean available = account.prepareForAuthentication(now);
 		boolean passwordMatches = encoder.matches(rawPassword, account.passwordHash());
 		if (!available || !passwordMatches) {
+			if (!available && account.status() == AccountStatus.DISABLED) sessions.revokeAll(account.id());
 			if (available) account.recordAuthenticationFailure(policy, now);
 			history.save(new LoginHistoryEntity(account.id(), normalizedUsername, false, now, ipAddress, userAgent));
 			return Optional.empty();

@@ -64,6 +64,16 @@ public class AccountService {
 	}
 
 	@Transactional
+	public void scheduleDisableForEmployee(long employeeId, Instant effectiveAt) {
+		if (employeeId <= 0) throw new IllegalArgumentException("사원 ID가 올바르지 않습니다.");
+		AccountEntity account = accounts.findByEmployeeId(employeeId)
+			.orElseThrow(() -> new IllegalArgumentException("연결된 계정을 찾을 수 없습니다."));
+		Instant now = clock.instant();
+		account.scheduleDisable(effectiveAt, now);
+		if (!effectiveAt.isAfter(now)) sessions.revokeAllByAccountId(account.id(), now);
+	}
+
+	@Transactional
 	public void lock(long accountId, Instant until) {
 		accounts.findById(accountId)
 			.orElseThrow(() -> new IllegalArgumentException("계정을 찾을 수 없습니다."))

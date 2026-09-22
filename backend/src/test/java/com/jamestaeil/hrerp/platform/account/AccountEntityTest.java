@@ -56,4 +56,18 @@ class AccountEntityTest {
 		assertEquals(AccountStatus.ACTIVE, account.status());
 		assertEquals(0, account.failedAttempts());
 	}
+
+	@Test
+	void scheduledDisableKeepsAccountActiveUntilEffectiveInstant() {
+		AccountEntity account = new AccountEntity(7L, "worker", "bcrypt-hash", NOW);
+		Instant effectiveAt = NOW.plusSeconds(3600);
+
+		account.scheduleDisable(effectiveAt, NOW);
+
+		assertEquals(AccountStatus.ACTIVE, account.status());
+		assertEquals(effectiveAt, account.disabledAt());
+		assertEquals(true, account.prepareForAuthentication(effectiveAt.minusMillis(1)));
+		assertEquals(false, account.prepareForAuthentication(effectiveAt));
+		assertEquals(AccountStatus.DISABLED, account.status());
+	}
 }

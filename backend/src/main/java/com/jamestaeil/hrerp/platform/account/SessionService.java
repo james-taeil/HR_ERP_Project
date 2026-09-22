@@ -48,8 +48,11 @@ public class SessionService {
 		if (found.isEmpty()) return Optional.empty();
 		SessionEntity session = found.get();
 		Optional<AccountEntity> account = accounts.findById(session.accountId());
-		if (account.isEmpty() || account.get().status() != AccountStatus.ACTIVE
+		if (account.isEmpty() || !account.get().prepareForAuthentication(now)
 				|| !session.isUsable(now, policy.idleTimeout())) {
+			if (account.isPresent() && account.get().status() == AccountStatus.DISABLED) {
+				sessions.revokeAllByAccountId(account.get().id(), now);
+			}
 			session.revoke(now);
 			return Optional.empty();
 		}
