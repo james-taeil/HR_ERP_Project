@@ -78,4 +78,18 @@ class AccountServiceTest {
 		assertEquals(AccountStatus.DISABLED, account.status());
 		verify(sessions).revokeAllByAccountId(42L, NOW);
 	}
+
+	@Test
+	void schedulesEmployeeAccountDisableWithoutRevokingBeforeEffectiveInstant() {
+		AccountEntity account = new AccountEntity(7L, "worker", encoder.encode("current-pass!"), NOW);
+		when(accounts.findByEmployeeId(7L)).thenReturn(Optional.of(account));
+		Instant effectiveAt = NOW.plusSeconds(3600);
+
+		service.scheduleDisableForEmployee(7L, effectiveAt);
+
+		assertEquals(AccountStatus.ACTIVE, account.status());
+		assertEquals(effectiveAt, account.disabledAt());
+		verify(sessions, org.mockito.Mockito.never()).revokeAllByAccountId(
+			org.mockito.ArgumentMatchers.anyLong(), any(Instant.class));
+	}
 }

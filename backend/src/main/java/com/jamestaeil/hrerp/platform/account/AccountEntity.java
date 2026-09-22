@@ -60,6 +60,17 @@ class AccountEntity {
 		this.updatedAt = now;
 	}
 
+	void scheduleDisable(Instant effectiveAt, Instant now) {
+		if (effectiveAt == null) throw new IllegalArgumentException("비활성 효력 시각이 필요합니다.");
+		if (!effectiveAt.isAfter(now)) {
+			changeStatus(AccountStatus.DISABLED, now);
+			return;
+		}
+		if (accountStatus == AccountStatus.DISABLED) return;
+		disabledAt = effectiveAt;
+		updatedAt = now;
+	}
+
 	void lockUntil(Instant until, Instant now) {
 		if (until == null || !until.isAfter(now)) {
 			throw new IllegalArgumentException("잠금 만료 시각은 현재보다 이후여야 합니다.");
@@ -71,6 +82,11 @@ class AccountEntity {
 	}
 
 	boolean prepareForAuthentication(Instant now) {
+		if (disabledAt != null && !disabledAt.isAfter(now)) {
+			accountStatus = AccountStatus.DISABLED;
+			lockedUntil = null;
+			updatedAt = now;
+		}
 		if (accountStatus == AccountStatus.LOCKED && lockedUntil != null && !lockedUntil.isAfter(now)) {
 			accountStatus = AccountStatus.ACTIVE;
 			failedAttempts = 0;

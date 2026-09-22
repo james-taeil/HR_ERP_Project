@@ -76,6 +76,19 @@ class SessionServiceTest {
 	}
 
 	@Test
+	void rejectsAndRevokesAllSessionsAtScheduledDisableInstant() {
+		SessionEntity session = session(9L, NOW.minusSeconds(60), NOW.plus(Duration.ofHours(8)));
+		AccountEntity account = account(42L, AccountStatus.ACTIVE);
+		account.scheduleDisable(NOW, NOW.minusSeconds(60));
+		when(sessions.findByTokenDigest(SessionService.digest("scheduled"))).thenReturn(Optional.of(session));
+		when(accounts.findById(42L)).thenReturn(Optional.of(account));
+
+		assertTrue(service.authenticate("scheduled").isEmpty());
+		assertEquals(AccountStatus.DISABLED, account.status());
+		verify(sessions).revokeAllByAccountId(42L, NOW);
+	}
+
+	@Test
 	void rejectsSessionAfterIdleTimeoutEvenBeforeAbsoluteExpiry() {
 		SessionEntity idle = session(9L, NOW.minus(Duration.ofMinutes(31)), NOW.plus(Duration.ofHours(7)));
 		AccountEntity active = account(42L, AccountStatus.ACTIVE);
