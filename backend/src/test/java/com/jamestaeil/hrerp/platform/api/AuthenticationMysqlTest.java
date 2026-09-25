@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 import javax.sql.DataSource;
 
@@ -38,6 +40,7 @@ import com.jamestaeil.hrerp.platform.account.AccountService;
 import com.jamestaeil.hrerp.platform.account.AuthenticationService;
 import com.jamestaeil.hrerp.platform.account.AccountStatus;
 import com.jamestaeil.hrerp.platform.account.SessionService;
+import com.jamestaeil.hrerp.platform.port.AccountAccessScheduler;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -57,6 +60,7 @@ class AuthenticationMysqlTest {
 	@Autowired AccountService accounts;
 	@Autowired AuthenticationService authentication;
 	@Autowired SessionService sessions;
+	@Autowired AccountAccessScheduler accountAccess;
 	@Autowired DataSource source;
 	@Autowired MockMvc mockMvc;
 	private JdbcTemplate jdbc;
@@ -170,6 +174,28 @@ class AuthenticationMysqlTest {
 		accounts.changeStatus(accountId, AccountStatus.DISABLED);
 		assertTrue(sessions.authenticate(third).isEmpty());
 		assertEquals(3, jdbc.queryForObject(
+			"SELECT COUNT(*) FROM platform_sessions WHERE account_id=? AND revoked_at IS NOT NULL",
+			Integer.class, accountId));
+	}
+
+	@Test
+	void scheduledTerminationAccessBlocksLoginSessionAndPermissionFromSeoulEffectiveDay() {
+		String rawToken = authentication.login(username, "correct-password!", null, null)
+			.orElseThrow().rawToken();
+		LocalDate effectiveDate = LocalDate.now(ZoneId.of("Asia/Seoul")).plusDays(1);
+
+		accountAccess.disableFrom(employeeId, effectiveDate);
+
+		assertEquals("ACTIVE", jdbc.queryForObject(
+			"SELECT account_status FROM platform_accounts WHERE id=?", String.class, accountId));
+		assertEquals(effectiveDate.atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant(), jdbc.queryForObject(
+			"SELECT disabled_at FROM platform_accounts WHERE id=?", java.sql.Timestamp.class, accountId).toInstant());
+
+		jdbc.update("UPDATE platform_accounts SET disabled_at=UTC_TIMESTAMP(6) - INTERVAL 1 SECOND WHERE id=?", accountId);
+		assertTrue(sessions.authenticate(rawToken).isEmpty());
+		assertEquals("DISABLED", jdbc.queryForObject(
+			"SELECT account_status FROM platform_accounts WHERE id=?", String.class, accountId));
+		assertEquals(1, jdbc.queryForObject(
 			"SELECT COUNT(*) FROM platform_sessions WHERE account_id=? AND revoked_at IS NOT NULL",
 			Integer.class, accountId));
 	}

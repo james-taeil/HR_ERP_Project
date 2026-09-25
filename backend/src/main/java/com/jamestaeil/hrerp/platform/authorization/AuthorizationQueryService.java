@@ -37,6 +37,7 @@ public class AuthorizationQueryService {
 			JOIN platform_permissions p ON p.id = rp.permission_id
 			WHERE ar.account_id = :accountId
 			  AND a.account_status = 'ACTIVE'
+			  AND (a.disabled_at IS NULL OR a.disabled_at > :now)
 			  AND r.active = TRUE
 			  AND ar.valid_from <= :now
 			  AND (ar.valid_to IS NULL OR ar.valid_to > :now)
@@ -62,9 +63,11 @@ public class AuthorizationQueryService {
 			JOIN employees e ON e.id = :targetEmployeeId
 			LEFT JOIN platform_workplaces w ON w.id = e.workplace_id
 			WHERE a.id = :accountId AND a.account_status = 'ACTIVE'
+			  AND (a.disabled_at IS NULL OR a.disabled_at > :now)
 			""")
 			.param("targetEmployeeId", targetEmployeeId)
 			.param("accountId", accountId)
+			.param("now", clock.instant())
 			.query((rs, row) -> new AccessTarget(
 				rs.getLong("actor_employee_id"),
 				rs.getLong("target_workplace_id"),

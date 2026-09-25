@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 interface AccountRepository extends JpaRepository<AccountEntity, Long> {
 	Optional<AccountEntity> findByUsername(String username);
+	Optional<AccountEntity> findByEmployeeId(long employeeId);
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select account from AccountEntity account where account.username = :username")
