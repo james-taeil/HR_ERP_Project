@@ -1,4 +1,4 @@
-# Design: 010 인사관리 FR-001~019
+# Design: 010 인사관리 FR-001~024
 
 > 근거: `specs/010-인사관리/spec.md` FR-001~016, AC-001~016
 > 상위 설계: `specs/000-product/design.md`  
@@ -278,3 +278,14 @@ FR-001의 등록과 체크리스트, FR-038의 이벤트는 같은 트랜잭션�
 - 인사기록카드의 `contracts`는 계약 조회 projection으로 채운다. FR-020 알림과 FR-021 PDF·열람 확인은 실제 알림·파일 저장소 연결 티켓으로 남긴다.
 
 근거: FR-017~019, AC-017~019, NFR-007.
+
+## 18. 사원 검색과 커서 목록
+
+- `GET /api/hr/employees` 는 `workplaceId`, `departmentId`, `employmentStatus`, `employmentType`, `hireDateFrom`, `hireDateTo`, `position`, `query`, `afterId`, `limit`을 받는다. 지정된 필터는 모두 AND로 결합한다.
+- `query`는 성명 또는 사번의 부분 일치다. MySQL 와일드카드로 해석되지 않게 값을 escape하고 `LIKE ... ESCAPE` 조건을 사용한다.
+- 순서는 `employees.id` 오름차순으로 고정하고 `afterId` 다음부터 `limit+1`개를 조회한다. 전체 `COUNT(*)`를 실행하지 않고 초과 행으로 `nextCursor`를 판정한다. `limit`은 1~100이다.
+- 응답은 사원 ID, 사번, 성명, 입사일, 고용형태, 사업장·부서 ID, 직위, 재직 상태만 포함한다. 생년월일·연락처·민감정보는 목록에서 제외한다.
+- `HR_RECORD_READ`와 현재 조직 범위를 서버에서 먼저 해석하고, 호출자에게 허용된 부서의 사원만 검색 SQL에서 필터한다. `SELF`는 본인만 허용한다.
+- V11은 커서·조직·상태·고용형태·입사일 필터의 복합 인덱스와 사번 검색 인덱스를 추가한다. 10만 건의 첫·중간·마지막 커서에서 1초 이내를 검증한다.
+
+근거: FR-022~024, AC-022~024, NFR-001, P-5.

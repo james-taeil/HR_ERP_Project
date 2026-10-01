@@ -11,13 +11,14 @@ import com.jamestaeil.hrerp.hr.employee.application.EmployeeNumberExhaustedExcep
 import com.jamestaeil.hrerp.platform.port.PlatformIntegrationUnavailableException;
 import com.jamestaeil.hrerp.platform.port.EmployeeRegistrationForbiddenException;
 import com.jamestaeil.hrerp.platform.port.OrganizationValidationException;
+import com.jamestaeil.hrerp.platform.port.RecordAccessForbiddenException;
 
 @RestControllerAdvice
 public class EmployeeApiExceptionHandler {
 	@ExceptionHandler({IllegalArgumentException.class, MethodArgumentNotValidException.class,
 		HttpMessageNotReadableException.class})
 	ResponseEntity<ApiError> badRequest(Exception exception) {
-		return response(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Employee registration request is invalid");
+		return response(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Employee request is invalid");
 	}
 
 	@ExceptionHandler(EmployeeNumberExhaustedException.class)
@@ -33,6 +34,11 @@ public class EmployeeApiExceptionHandler {
 	@ExceptionHandler(EmployeeRegistrationForbiddenException.class)
 	ResponseEntity<ApiError> forbidden() {
 		return response(HttpStatus.FORBIDDEN, "FORBIDDEN", "Employee registration is forbidden");
+	}
+
+	@ExceptionHandler(RecordAccessForbiddenException.class)
+	ResponseEntity<ApiError> searchForbidden() {
+		return response(HttpStatus.FORBIDDEN, "FORBIDDEN", "Employee search is forbidden");
 	}
 
 	@ExceptionHandler(OrganizationValidationException.class)
