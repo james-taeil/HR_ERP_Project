@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import com.jamestaeil.hrerp.hr.employee.application.EmployeeNumberExhaustedException;
+import com.jamestaeil.hrerp.hr.employee.application.EmployeeBulkConflictException;
 import com.jamestaeil.hrerp.platform.port.PlatformIntegrationUnavailableException;
 import com.jamestaeil.hrerp.platform.port.EmployeeRegistrationForbiddenException;
 import com.jamestaeil.hrerp.platform.port.OrganizationValidationException;
@@ -24,6 +25,11 @@ public class EmployeeApiExceptionHandler {
 	@ExceptionHandler(EmployeeNumberExhaustedException.class)
 	ResponseEntity<ApiError> sequenceExhausted() {
 		return response(HttpStatus.CONFLICT, "EMPLOYEE_NUMBER_EXHAUSTED", "Employee number sequence is exhausted");
+	}
+
+	@ExceptionHandler(EmployeeBulkConflictException.class)
+	ResponseEntity<ApiError> bulkConflict() {
+		return response(HttpStatus.CONFLICT, "BULK_REGISTRATION_CONFLICT", "Bulk registration cannot be confirmed");
 	}
 
 	@ExceptionHandler(PlatformIntegrationUnavailableException.class)
