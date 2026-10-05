@@ -6,6 +6,7 @@ import { buildRegistrationPayload, employmentTypes } from './features/employee/e
 import PlatformAccess from './features/platform/PlatformAccess.jsx'
 import PlatformAdmin from './features/platform/PlatformAdmin.jsx'
 import EmployeeSearch from './features/employee/EmployeeSearch.jsx'
+import EmployeeBulk from './features/employee/EmployeeBulk.jsx'
 
 const initialForm = {
   name: '', birthDate: '', phone: '', hireDate: '', employmentType: 'REGULAR',
@@ -63,11 +64,12 @@ function App() {
       <nav className="actions" aria-label="인사관리 메뉴">
         <button type="button" aria-current={page === 'register' ? 'page' : undefined} onClick={() => setPage('register')}>사원 등록</button>
         <button type="button" aria-current={page === 'search' ? 'page' : undefined} onClick={() => setPage('search')}>사원 검색</button>
+        <button type="button" aria-current={page === 'bulk' ? 'page' : undefined} onClick={() => setPage('bulk')}>일괄 등록</button>
         <button type="button" aria-current={page === 'record' ? 'page' : undefined} onClick={() => setPage('record')}>인사기록카드</button>
         <button type="button" aria-current={page === 'lifecycle' ? 'page' : undefined} onClick={() => setPage('lifecycle')}>재직·발령</button>
         <button type="button" aria-current={page === 'platform' ? 'page' : undefined} onClick={() => setPage('platform')}>플랫폼 관리</button>
       </nav>
-      {page === 'platform' ? <PlatformAdmin /> : page === 'search' ? <EmployeeSearch /> : page === 'record' ? <RecordCard /> : page === 'lifecycle' ? <LifecyclePanel /> : <>
+      {page === 'platform' ? <PlatformAdmin /> : page === 'bulk' ? <EmployeeBulk /> : page === 'search' ? <EmployeeSearch /> : page === 'record' ? <RecordCard /> : page === 'lifecycle' ? <LifecyclePanel /> : <>
       <header>
         <p className="eyebrow">HR ERP · 인사관리</p>
         <h1>사원 등록</h1>
