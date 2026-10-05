@@ -7,6 +7,7 @@ import com.jamestaeil.hrerp.hr.record.domain.*;
 import com.jamestaeil.hrerp.hr.record.infrastructure.*;
 import com.jamestaeil.hrerp.platform.port.*;
 import com.jamestaeil.hrerp.hr.record.application.RecordViews.*;
+import com.jamestaeil.hrerp.hr.contract.ContractService;
 
 @Service
 public class RecordService {
@@ -16,11 +17,13 @@ public class RecordService {
     private final AuthorizationChecker authorization;
     private final FileStorage files;
     private final RecordAudit audit;
+    private final ContractService contracts;
 
     public RecordService(RecordRepository records, RecordMutationClaims claims, CurrentActorProvider actors,
-                         AuthorizationChecker authorization, FileStorage files, RecordAudit audit) {
+                         AuthorizationChecker authorization, FileStorage files, RecordAudit audit,
+                         ContractService contracts) {
         this.records = records; this.claims = claims; this.actors = actors;
-        this.authorization = authorization; this.files = files; this.audit = audit;
+        this.authorization = authorization; this.files = files; this.audit = audit; this.contracts = contracts;
     }
 
     // Not readOnly: the access audit must be committed in this transaction.
@@ -30,7 +33,8 @@ public class RecordService {
         var employee = records.employee(employeeId);
         var card = new Card(employee, records.list(employeeId, RecordKind.FAMILY),
             records.list(employeeId, RecordKind.EDUCATION), records.list(employeeId, RecordKind.CAREER),
-            records.list(employeeId, RecordKind.CERTIFICATION), records.appointments(employeeId), List.of());
+            records.list(employeeId, RecordKind.CERTIFICATION), records.appointments(employeeId),
+            contracts.contractsForCard(employeeId));
         audit.viewed(actor, employeeId, "record");
         return card;
     }

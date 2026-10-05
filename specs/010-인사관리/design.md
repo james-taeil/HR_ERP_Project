@@ -1,4 +1,4 @@
-# Design: 010 인사관리 FR-001~016
+# Design: 010 인사관리 FR-001~024
 
 > 근거: `specs/010-인사관리/spec.md` FR-001~016, AC-001~016
 > 상위 설계: `specs/000-product/design.md`  
@@ -266,3 +266,26 @@ FR-001의 등록과 체크리스트, FR-038의 이벤트는 같은 트랜잭션�
 - `GET /api/hr/headcount?date=YYYY-MM-DD`: 기준일 정원·현원
 
 모든 쓰기는 호출자별 멱등 키와 사원 행 잠금을 사용한다. 권한·조직·파일·감사·계정·과제 포트는 fail-closed이며 900 실제 구현 연결 전에는 운영 완료로 판정하지 않는다.
+
+## 17. 근로계약과 임금 이력
+
+- `employment_contracts`는 계약 기간, 근무 장소, 주당 소정근로분, 약정 월임금(원 단위 정수), 선택적 수습 기간과 조건을 저장한다. 계약·수습 종료일은 시작일보다 빠를 수 없고 수습 기간은 계약 기간 안에 있어야 한다.
+- 계약 경계일을 포함하므로 `new.start <= old.end AND new.end >= old.start`이면 겹침이다. 동시 등록은 사원 행을 `FOR UPDATE`로 잠그고 검사한다.
+- `wage_contracts`는 적용 시작일별 새 이력으로만 추가하고 수정·삭제 API를 제공하지 않는다. 같은 사원의 적용 시작일은 고유하다.
+- `wage_contract_items`는 항목명, `BASE_PAY/FIXED_ALLOWANCE/VARIABLE_ALLOWANCE/NON_TAXABLE`, 금액, 과세 여부, 통상임금 포함 여부를 필수로 보존한다. 임금 항목은 한 개 이상이어야 한다.
+- `POST/GET /api/hr/employees/{employeeId}/contracts`와 `POST/GET /api/hr/employees/{employeeId}/wage-contracts`를 제공한다. 쓰기는 `HR_RECORD_WRITE`, 조회는 `HR_RECORD_READ`를 서버에서 검사하고 `RecordAudit`에 기록한다.
+- 호출자별 멱등 키에 같은 본문은 최초 결과, 다른 본문은 409다. 잘못된 기간·금액·항목은 400, 없는 사원은 404, 겹침·적용일 중복은 409다.
+- 인사기록카드의 `contracts`는 계약 조회 projection으로 채운다. FR-020 알림과 FR-021 PDF·열람 확인은 실제 알림·파일 저장소 연결 티켓으로 남긴다.
+
+근거: FR-017~019, AC-017~019, NFR-007.
+
+## 18. 사원 검색과 커서 목록
+
+- `GET /api/hr/employees` 는 `workplaceId`, `departmentId`, `employmentStatus`, `employmentType`, `hireDateFrom`, `hireDateTo`, `position`, `query`, `afterId`, `limit`을 받는다. 지정된 필터는 모두 AND로 결합한다.
+- `query`는 성명 또는 사번의 부분 일치다. MySQL 와일드카드로 해석되지 않게 값을 escape하고 `LIKE ... ESCAPE` 조건을 사용한다.
+- 순서는 `employees.id` 오름차순으로 고정하고 `afterId` 다음부터 `limit+1`개를 조회한다. 전체 `COUNT(*)`를 실행하지 않고 초과 행으로 `nextCursor`를 판정한다. `limit`은 1~100이다.
+- 응답은 사원 ID, 사번, 성명, 입사일, 고용형태, 사업장·부서 ID, 직위, 재직 상태만 포함한다. 생년월일·연락처·민감정보는 목록에서 제외한다.
+- `HR_RECORD_READ`와 현재 조직 범위를 서버에서 먼저 해석하고, 호출자에게 허용된 부서의 사원만 검색 SQL에서 필터한다. `SELF`는 본인만 허용한다.
+- V11은 커서·조직·상태·고용형태·입사일 필터의 복합 인덱스와 사번 검색 인덱스를 추가한다. 10만 건의 첫·중간·마지막 커서에서 1초 이내를 검증한다.
+
+근거: FR-022~024, AC-022~024, NFR-001, P-5.

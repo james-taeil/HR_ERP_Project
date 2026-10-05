@@ -11,6 +11,7 @@ import com.jamestaeil.hrerp.hr.record.application.RecordViews.*;
 import com.jamestaeil.hrerp.hr.record.domain.*;
 import com.jamestaeil.hrerp.hr.record.infrastructure.*;
 import com.jamestaeil.hrerp.platform.port.*;
+import com.jamestaeil.hrerp.hr.contract.ContractService;
 
 class RecordServiceTest {
     private final RecordRepository records = mock(RecordRepository.class);
@@ -19,7 +20,8 @@ class RecordServiceTest {
     private final AuthorizationChecker authorization = mock(AuthorizationChecker.class);
     private final FileStorage files = mock(FileStorage.class);
     private final RecordAudit audit = mock(RecordAudit.class);
-    private final RecordService service = new RecordService(records, claims, actors, authorization, files, audit);
+    private final ContractService contracts = mock(ContractService.class);
+    private final RecordService service = new RecordService(records, claims, actors, authorization, files, audit, contracts);
     private final RecordData.Family data = new RecordData.Family("테스트", "자녀", LocalDate.of(2020, 1, 1), true, true, false, false);
 
     @BeforeEach void setup() {
@@ -100,6 +102,7 @@ class RecordServiceTest {
         for (RecordKind kind : RecordKind.values()) verify(records).list(1, kind);
         verify(records).appointments(1);
         verifyNoMoreInteractions(records);
+        verify(contracts).contractsForCard(1);
         verify(audit).viewed(9, 1, "record");
     }
 }
