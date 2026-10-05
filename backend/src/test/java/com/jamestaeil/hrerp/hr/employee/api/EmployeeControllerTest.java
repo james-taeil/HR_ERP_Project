@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -17,17 +18,30 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.jamestaeil.hrerp.hr.employee.application.RegisterEmployeeCommand;
 import com.jamestaeil.hrerp.hr.employee.application.RegisterEmployeeResult;
 import com.jamestaeil.hrerp.hr.employee.application.RegisterEmployeeService;
+import com.jamestaeil.hrerp.hr.employee.application.EmployeeSearchService;
+import java.util.List;
 
 class EmployeeControllerTest {
 	private RegisterEmployeeService service;
+	private EmployeeSearchService search;
 	private MockMvc mockMvc;
 
 	@BeforeEach
 	void setUp() {
 		service = mock(RegisterEmployeeService.class);
-		mockMvc = MockMvcBuilders.standaloneSetup(new EmployeeController(service))
+		search = mock(EmployeeSearchService.class);
+		mockMvc = MockMvcBuilders.standaloneSetup(new EmployeeController(service, search))
 			.setControllerAdvice(new EmployeeApiExceptionHandler())
 			.build();
+	}
+
+	@Test
+	void returnsCursorEmployeePage() throws Exception {
+		when(search.search(any())).thenReturn(new EmployeeSearchService.Page(List.of(), 42L));
+		mockMvc.perform(get("/api/hr/employees").param("employmentStatus", "ACTIVE")
+			.param("query", "2600").param("afterId", "10").param("limit", "20"))
+			.andExpect(status().isOk()).andExpect(jsonPath("$.items").isArray())
+			.andExpect(jsonPath("$.nextCursor").value(42));
 	}
 
 	@Test

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -28,6 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.jamestaeil.hrerp.platform.account.AccountService;
 import com.jamestaeil.hrerp.platform.account.AuthenticationService;
+import com.jamestaeil.hrerp.platform.port.EmployeeSearchScopeReader;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -50,6 +52,7 @@ class AuthorizationMysqlTest {
 	@Autowired AuthorizationQueryService authorization;
 	@Autowired AuthorizationAdminService admin;
 	@Autowired MockMvc mockMvc;
+	@Autowired EmployeeSearchScopeReader employeeSearchScopes;
 	private JdbcTemplate jdbc;
 	private int suffix;
 	private long companyId;
@@ -169,6 +172,22 @@ class AuthorizationMysqlTest {
 			.contentType(MediaType.APPLICATION_JSON)
 			.content("{}"))
 			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	void employeeSearchAppliesDepartmentTreeScopeBeforePaging() throws Exception {
+		scope(OrganizationScopeType.DEPARTMENT_TREE, departmentId);
+		var resolved = employeeSearchScopes.requireReadableScope(actorAccountId);
+		assertTrue(resolved.departmentIds().contains(departmentId));
+		assertTrue(resolved.departmentIds().contains(childDepartmentId));
+		assertFalse(resolved.departmentIds().contains(otherDepartmentId));
+		String token = authentication.login("actor." + suffix, "correct-password!", null, null)
+			.orElseThrow().rawToken();
+		mockMvc.perform(get("/api/hr/employees").param("query", "권한테스트").param("limit", "100")
+			.cookie(new MockCookie("HRERP_SESSION", token)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.items.length()").value(4))
+			.andExpect(jsonPath("$.items[?(@.id == " + otherWorkplaceEmployeeId + ")]").isEmpty());
 	}
 
 	private long workplace(String name, String number) {
