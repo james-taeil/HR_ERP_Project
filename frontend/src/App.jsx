@@ -8,6 +8,7 @@ import PlatformAdmin from './features/platform/PlatformAdmin.jsx'
 import EmployeeSearch from './features/employee/EmployeeSearch.jsx'
 import EmployeeBulk from './features/employee/EmployeeBulk.jsx'
 import WorkerRoster from './features/employee/WorkerRoster.jsx'
+import HrAnalytics from './features/employee/HrAnalytics.jsx'
 
 const initialForm = {
   name: '', birthDate: '', gender: 'MALE', phone: '', address: '', hireDate: '', employmentType: 'REGULAR',
@@ -67,11 +68,12 @@ function App() {
         <button type="button" aria-current={page === 'search' ? 'page' : undefined} onClick={() => setPage('search')}>사원 검색</button>
         <button type="button" aria-current={page === 'bulk' ? 'page' : undefined} onClick={() => setPage('bulk')}>일괄 등록</button>
         <button type="button" aria-current={page === 'roster' ? 'page' : undefined} onClick={() => setPage('roster')}>근로자 명부</button>
+        <button type="button" aria-current={page === 'analytics' ? 'page' : undefined} onClick={() => setPage('analytics')}>인사 통계</button>
         <button type="button" aria-current={page === 'record' ? 'page' : undefined} onClick={() => setPage('record')}>인사기록카드</button>
         <button type="button" aria-current={page === 'lifecycle' ? 'page' : undefined} onClick={() => setPage('lifecycle')}>재직·발령</button>
         <button type="button" aria-current={page === 'platform' ? 'page' : undefined} onClick={() => setPage('platform')}>플랫폼 관리</button>
       </nav>
-      {page === 'platform' ? <PlatformAdmin /> : page === 'roster' ? <WorkerRoster /> : page === 'bulk' ? <EmployeeBulk /> : page === 'search' ? <EmployeeSearch /> : page === 'record' ? <RecordCard /> : page === 'lifecycle' ? <LifecyclePanel /> : <>
+      {page === 'platform' ? <PlatformAdmin /> : page === 'analytics' ? <HrAnalytics /> : page === 'roster' ? <WorkerRoster /> : page === 'bulk' ? <EmployeeBulk /> : page === 'search' ? <EmployeeSearch /> : page === 'record' ? <RecordCard /> : page === 'lifecycle' ? <LifecyclePanel /> : <>
       <header>
         <p className="eyebrow">HR ERP · 인사관리</p>
         <h1>사원 등록</h1>
