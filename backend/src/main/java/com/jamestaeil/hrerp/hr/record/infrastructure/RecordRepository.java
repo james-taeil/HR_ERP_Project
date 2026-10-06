@@ -18,7 +18,7 @@ public class RecordRepository {
     public EmployeeSummary employee(long id) {
         return em.createQuery("""
             select new com.jamestaeil.hrerp.hr.record.application.RecordViews$EmployeeSummary(
-                e.id, e.employeeNumber, e.employeeName, e.birthDate, e.phone, e.hireDate,
+                e.id, e.employeeNumber, e.employeeName, e.birthDate, e.gender, e.phone, e.address, e.hireDate,
                 e.employmentType, e.workplaceId, e.departmentId, e.positionName,
                 e.probationEndDate, e.foreignWorker)
             from EmployeeEntity e where e.id = :id

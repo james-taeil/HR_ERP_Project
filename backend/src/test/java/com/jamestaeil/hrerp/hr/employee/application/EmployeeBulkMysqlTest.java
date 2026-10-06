@@ -25,7 +25,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @SpringBootTest
 @EnabledIfEnvironmentVariable(named = "HR_RECORD_MYSQL_TEST_URL", matches = ".+/hr_record_test(?:\\?.*)?$")
 class EmployeeBulkMysqlTest {
-    private static final String[] HEADERS = {"성명","생년월일","연락처","입사일","고용형태","사업장ID","부서ID","직위","수습종료일","외국인여부","국적","체류자격","체류시작일","체류종료일","외국인등록번호"};
+    private static final String[] HEADERS = {"성명","생년월일","성별","연락처","주소","입사일","고용형태","사업장ID","부서ID","직위","수습종료일","외국인여부","국적","체류자격","체류시작일","체류종료일","외국인등록번호"};
     @DynamicPropertySource static void database(DynamicPropertyRegistry p) {
         p.add("spring.datasource.url", () -> System.getenv("HR_RECORD_MYSQL_TEST_URL"));
         p.add("spring.datasource.username", () -> System.getenv().getOrDefault("HR_RECORD_MYSQL_TEST_USER", "root"));
@@ -134,10 +134,11 @@ class EmployeeBulkMysqlTest {
             for (int i=1;i<=count;i++) {
                 Row row=sheet.createRow(i); int value=duplicate?1:i;
                 row.createCell(0).setCellValue("BULK-"+value);
-                row.createCell(1).setCellValue("1990-01-01"); row.createCell(2).setCellValue("010-0000-"+String.format("%04d", value));
-                row.createCell(3).setCellValue("2026-01-01"); row.createCell(4).setCellValue("REGULAR");
-                row.createCell(5).setCellValue(1); row.createCell(6).setCellValue(1); row.createCell(7).setCellValue("사원");
-                row.createCell(9).setCellValue("FALSE");
+                row.createCell(1).setCellValue("1990-01-01"); row.createCell(2).setCellValue("MALE");
+                row.createCell(3).setCellValue("010-0000-"+String.format("%04d", value)); row.createCell(4).setCellValue("서울특별시 중구");
+                row.createCell(5).setCellValue("2026-01-01"); row.createCell(6).setCellValue("REGULAR");
+                row.createCell(7).setCellValue(1); row.createCell(8).setCellValue(1); row.createCell(9).setCellValue("사원");
+                row.createCell(11).setCellValue("FALSE");
             }
             if (formula) sheet.getRow(1).createCell(0).setCellFormula("\"BULK-FORMULA\"");
             wb.write(out); return out.toByteArray();
@@ -146,10 +147,10 @@ class EmployeeBulkMysqlTest {
     private byte[] foreignWorkbook() throws Exception {
         byte[] bytes = workbook(1, false, false);
         try (Workbook wb = new XSSFWorkbook(new java.io.ByteArrayInputStream(bytes)); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Row row=wb.getSheet("사원등록").getRow(1); row.getCell(9).setCellValue("TRUE");
-            row.createCell(10).setCellValue("대한민국"); row.createCell(11).setCellValue("F-2");
-            row.createCell(12).setCellValue("2026-01-01"); row.createCell(13).setCellValue("2027-01-01");
-            row.createCell(14).setCellValue("900101-1234567"); wb.write(out); return out.toByteArray();
+            Row row=wb.getSheet("사원등록").getRow(1); row.getCell(11).setCellValue("TRUE");
+            row.createCell(12).setCellValue("대한민국"); row.createCell(13).setCellValue("F-2");
+            row.createCell(14).setCellValue("2026-01-01"); row.createCell(15).setCellValue("2027-01-01");
+            row.createCell(16).setCellValue("900101-1234567"); wb.write(out); return out.toByteArray();
         }
     }
 }

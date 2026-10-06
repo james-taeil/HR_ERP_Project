@@ -66,7 +66,8 @@ public class RegisterEmployeeService {
 
 		EmployeeNumber employeeNumber = numberGenerator.generate(command.hireDate(), departmentCode);
 		ForeignWorkerDetails foreignDetails = command.foreignWorker() ? encryptForeignDetails(command) : null;
-		Employee employee = new Employee(employeeNumber, command.name(), command.birthDate(), command.phone(),
+		Employee employee = new Employee(employeeNumber, command.name(), command.birthDate(), command.gender(), command.phone(),
+			command.address(),
 			command.hireDate(), command.employmentType(), command.workplaceId(), command.departmentId(),
 			command.position(), command.probationEndDate(), foreignDetails);
 

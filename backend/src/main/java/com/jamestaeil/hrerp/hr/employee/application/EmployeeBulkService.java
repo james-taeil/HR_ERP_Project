@@ -3,6 +3,7 @@ package com.jamestaeil.hrerp.hr.employee.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jamestaeil.hrerp.hr.employee.domain.EmploymentType;
+import com.jamestaeil.hrerp.hr.employee.domain.Gender;
 import com.jamestaeil.hrerp.platform.port.AuthorizationChecker;
 import com.jamestaeil.hrerp.platform.port.CurrentActorProvider;
 import com.jamestaeil.hrerp.platform.port.OrganizationReader;
@@ -21,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class EmployeeBulkService {
     public static final long MAX_BYTES = 5L * 1024 * 1024;
     private static final int MAX_ROWS = 1000;
-    private static final List<String> HEADERS = List.of("성명","생년월일","연락처","입사일","고용형태","사업장ID","부서ID","직위","수습종료일","외국인여부","국적","체류자격","체류시작일","체류종료일","외국인등록번호");
+    private static final List<String> HEADERS = List.of("성명","생년월일","성별","연락처","주소","입사일","고용형태","사업장ID","부서ID","직위","수습종료일","외국인여부","국적","체류자격","체류시작일","체류종료일","외국인등록번호");
     private final JdbcTemplate jdbc;
     private final CurrentActorProvider actors;
     private final AuthorizationChecker authorization;
@@ -39,7 +40,7 @@ public class EmployeeBulkService {
                              List<RowError> errors, Instant expiresAt) {}
     public record Registered(long employeeId, String employeeNumber) {}
     public record Confirmation(String validationToken, int registeredRows, List<Registered> employees) {}
-    private record ParsedRow(int rowNumber, String name, LocalDate birthDate, String phone, LocalDate hireDate,
+    private record ParsedRow(int rowNumber, String name, LocalDate birthDate, Gender gender, String phone, String address, LocalDate hireDate,
         EmploymentType employmentType, long workplaceId, long departmentId, String position,
         LocalDate probationEndDate, boolean foreignWorker, String nationality, String visaType,
         LocalDate stayFrom, LocalDate stayUntil, String alienRegistrationNumber) {}
@@ -135,24 +136,27 @@ public class EmployeeBulkService {
 
     private static ParsedRow map(Row row, int number, DataFormatter f) {
         String name = required(row, 0, f, 100); LocalDate birth = date(row, 1, true, f);
-        String phone = required(row, 2, f, 30); LocalDate hire = date(row, 3, true, f);
-        EmploymentType type = EmploymentType.valueOf(required(row, 4, f, 30));
-        long workplace = positiveLong(row, 5, f); long department = positiveLong(row, 6, f);
-        String position = required(row, 7, f, 100); LocalDate probation = date(row, 8, false, f);
-        boolean foreign = bool(row, 9, f); String nationality = optional(row, 10, f);
-        String visa = optional(row, 11, f); LocalDate stayFrom = date(row, 12, false, f);
-        LocalDate stayUntil = date(row, 13, false, f); String registration = optional(row, 14, f);
+        Gender gender = Gender.valueOf(required(row, 2, f, 20));
+        if (gender == Gender.UNSPECIFIED) throw new IllegalArgumentException();
+        String phone = required(row, 3, f, 30); String address = required(row, 4, f, 500);
+        LocalDate hire = date(row, 5, true, f);
+        EmploymentType type = EmploymentType.valueOf(required(row, 6, f, 30));
+        long workplace = positiveLong(row, 7, f); long department = positiveLong(row, 8, f);
+        String position = required(row, 9, f, 100); LocalDate probation = date(row, 10, false, f);
+        boolean foreign = bool(row, 11, f); String nationality = optional(row, 12, f);
+        String visa = optional(row, 13, f); LocalDate stayFrom = date(row, 14, false, f);
+        LocalDate stayUntil = date(row, 15, false, f); String registration = optional(row, 16, f);
         if (probation != null && probation.isBefore(hire)) throw new IllegalArgumentException();
         if (foreign && (blank(nationality) || blank(visa) || stayFrom == null || stayUntil == null
                 || stayUntil.isBefore(stayFrom) || registration == null
                 || registration.replaceAll("[^0-9]", "").length() != 13)) throw new IllegalArgumentException();
         if (!foreign && (!blank(nationality) || !blank(visa) || stayFrom != null || stayUntil != null || !blank(registration)))
             throw new IllegalArgumentException();
-        return new ParsedRow(number, name, birth, phone, hire, type, workplace, department, position,
+        return new ParsedRow(number, name, birth, gender, phone, address, hire, type, workplace, department, position,
             probation, foreign, nationality, visa, stayFrom, stayUntil, registration);
     }
     private static RegisterEmployeeCommand command(String token, ParsedRow r) {
-        return new RegisterEmployeeCommand("bulk:" + token + ":" + r.rowNumber(), r.name(), r.birthDate(), r.phone(),
+        return new RegisterEmployeeCommand("bulk:" + token + ":" + r.rowNumber(), r.name(), r.birthDate(), r.gender(), r.phone(), r.address(),
             r.hireDate(), r.employmentType(), r.workplaceId(), r.departmentId(), r.position(), r.probationEndDate(),
             r.foreignWorker(), r.nationality(), r.visaType(), r.stayFrom(), r.stayUntil(), r.alienRegistrationNumber());
     }
@@ -175,7 +179,7 @@ public class EmployeeBulkService {
     private static long positiveLong(Row r,int i,DataFormatter f) { String v=required(r,i,f,20).replace(",",""); long n=Long.parseLong(v.replaceAll("\\.0$","")); if(n<=0)throw new IllegalArgumentException(); return n; }
     private static boolean bool(Row r,int i,DataFormatter f) { String v=required(r,i,f,5); if("TRUE".equalsIgnoreCase(v))return true; if("FALSE".equalsIgnoreCase(v))return false; throw new IllegalArgumentException(); }
     private static boolean blank(String v) { return v==null||v.isBlank(); }
-    private static String canonical(ParsedRow r) { return r.name()+"|"+r.birthDate()+"|"+r.phone()+"|"+r.hireDate()+"|"+r.employmentType()+"|"+r.workplaceId()+"|"+r.departmentId()+"|"+r.position()+"|"+r.foreignWorker(); }
+    private static String canonical(ParsedRow r) { return r.name()+"|"+r.birthDate()+"|"+r.gender()+"|"+r.phone()+"|"+r.address()+"|"+r.hireDate()+"|"+r.employmentType()+"|"+r.workplaceId()+"|"+r.departmentId()+"|"+r.position()+"|"+r.foreignWorker(); }
     private static String sha256(byte[] bytes) { try { return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)); } catch(Exception e){throw new IllegalStateException(e);} }
     private String writeResult(Confirmation result) { try{return json.writeValueAsString(result);}catch(JsonProcessingException e){throw new IllegalStateException(e);} }
     private Confirmation readResult(String value) { try{return json.readValue(value, Confirmation.class);}catch(JsonProcessingException e){throw new IllegalStateException(e);} }
