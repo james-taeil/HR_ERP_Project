@@ -52,8 +52,8 @@ class EmployeeControllerTest {
 		mockMvc.perform(post("/api/hr/employees")
 			.contentType(MediaType.APPLICATION_JSON)
 			.content("""
-				{"idempotencyKey":"request-1","name":"홍길동","birthDate":"1990-01-01",
-				"phone":"010-0000-0000","hireDate":"2026-09-01","employmentType":"REGULAR",
+				{"idempotencyKey":"request-1","name":"홍길동","birthDate":"1990-01-01","gender":"MALE",
+				"phone":"010-0000-0000","address":"서울특별시 중구","hireDate":"2026-09-01","employmentType":"REGULAR",
 				"workplaceId":1,"departmentId":1,"position":"사원","foreignWorker":false}
 				"""))
 			.andExpect(status().isCreated())
@@ -67,8 +67,8 @@ class EmployeeControllerTest {
 		mockMvc.perform(post("/api/hr/employees")
 			.contentType(MediaType.APPLICATION_JSON)
 			.content("""
-				{"idempotencyKey":"request-1","name":"홍길동","birthDate":"1990-01-01",
-				"phone":"010-0000-0000","hireDate":"2026-09-01","employmentType":"INTERN",
+				{"idempotencyKey":"request-1","name":"홍길동","birthDate":"1990-01-01","gender":"MALE",
+				"phone":"010-0000-0000","address":"서울특별시 중구","hireDate":"2026-09-01","employmentType":"INTERN",
 				"workplaceId":1,"departmentId":1,"position":"사원","foreignWorker":false}
 				"""))
 			.andExpect(status().isBadRequest())

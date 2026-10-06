@@ -27,6 +27,6 @@ class EmployeeTest {
 
 	private static Employee employee(EmploymentType type, LocalDate probationEndDate, ForeignWorkerDetails foreign) {
 		return new Employee(new EmployeeNumber("26000101"), "홍길동", LocalDate.of(1990, 1, 1),
-			"010-0000-0000", HIRE_DATE, type, 1, 1, "사원", probationEndDate, foreign);
+			Gender.MALE, "010-0000-0000", "서울특별시 중구", HIRE_DATE, type, 1, 1, "사원", probationEndDate, foreign);
 	}
 }

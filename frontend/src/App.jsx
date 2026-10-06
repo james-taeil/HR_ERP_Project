@@ -6,9 +6,11 @@ import { buildRegistrationPayload, employmentTypes } from './features/employee/e
 import PlatformAccess from './features/platform/PlatformAccess.jsx'
 import PlatformAdmin from './features/platform/PlatformAdmin.jsx'
 import EmployeeSearch from './features/employee/EmployeeSearch.jsx'
+import EmployeeBulk from './features/employee/EmployeeBulk.jsx'
+import WorkerRoster from './features/employee/WorkerRoster.jsx'
 
 const initialForm = {
-  name: '', birthDate: '', phone: '', hireDate: '', employmentType: 'REGULAR',
+  name: '', birthDate: '', gender: 'MALE', phone: '', address: '', hireDate: '', employmentType: 'REGULAR',
   workplaceId: '', departmentId: '', position: '', probationEndDate: '', foreignWorker: false,
   nationality: '', visaType: '', stayFrom: '', stayUntil: '', alienRegistrationNumber: '',
 }
@@ -63,11 +65,13 @@ function App() {
       <nav className="actions" aria-label="인사관리 메뉴">
         <button type="button" aria-current={page === 'register' ? 'page' : undefined} onClick={() => setPage('register')}>사원 등록</button>
         <button type="button" aria-current={page === 'search' ? 'page' : undefined} onClick={() => setPage('search')}>사원 검색</button>
+        <button type="button" aria-current={page === 'bulk' ? 'page' : undefined} onClick={() => setPage('bulk')}>일괄 등록</button>
+        <button type="button" aria-current={page === 'roster' ? 'page' : undefined} onClick={() => setPage('roster')}>근로자 명부</button>
         <button type="button" aria-current={page === 'record' ? 'page' : undefined} onClick={() => setPage('record')}>인사기록카드</button>
         <button type="button" aria-current={page === 'lifecycle' ? 'page' : undefined} onClick={() => setPage('lifecycle')}>재직·발령</button>
         <button type="button" aria-current={page === 'platform' ? 'page' : undefined} onClick={() => setPage('platform')}>플랫폼 관리</button>
       </nav>
-      {page === 'platform' ? <PlatformAdmin /> : page === 'search' ? <EmployeeSearch /> : page === 'record' ? <RecordCard /> : page === 'lifecycle' ? <LifecyclePanel /> : <>
+      {page === 'platform' ? <PlatformAdmin /> : page === 'roster' ? <WorkerRoster /> : page === 'bulk' ? <EmployeeBulk /> : page === 'search' ? <EmployeeSearch /> : page === 'record' ? <RecordCard /> : page === 'lifecycle' ? <LifecyclePanel /> : <>
       <header>
         <p className="eyebrow">HR ERP · 인사관리</p>
         <h1>사원 등록</h1>
@@ -79,7 +83,13 @@ function App() {
           <div className="grid">
             <Field label="성명" name="name" value={form.name} required maxLength="100" />
             <Field label="생년월일" name="birthDate" type="date" value={form.birthDate} required />
+            <Field label="성별" name="gender">
+              <select name="gender" value={form.gender} onChange={update} required>
+                <option value="MALE">남성</option><option value="FEMALE">여성</option>
+              </select>
+            </Field>
             <Field label="연락처" name="phone" type="tel" value={form.phone} required maxLength="30" />
+            <Field label="주소" name="address" value={form.address} required maxLength="500" />
             <Field label="입사일" name="hireDate" type="date" value={form.hireDate} required />
             <Field label="고용형태" name="employmentType">
               <select name="employmentType" value={form.employmentType} onChange={update} required>

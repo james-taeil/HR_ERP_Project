@@ -120,7 +120,8 @@ export default function RecordCard() {
         <h2 id="record-employee-heading">인적사항</h2>
         <dl className="grid">{[
           ['사번', card.employee.employeeNumber], ['성명', card.employee.name],
-          ['생년월일', card.employee.birthDate], ['연락처', card.employee.phone],
+          ['생년월일', card.employee.birthDate], ['성별', card.employee.gender === 'MALE' ? '남성' : card.employee.gender === 'FEMALE' ? '여성' : '미확정'],
+          ['연락처', card.employee.phone], ['주소', card.employee.address],
           ['입사일', card.employee.hireDate], ['고용형태', card.employee.employmentType],
           ['사업장 ID', card.employee.workplaceId], ['부서 ID', card.employee.departmentId],
           ['직위', card.employee.position], ['수습 종료일', card.employee.probationEndDate ?? '—'],
