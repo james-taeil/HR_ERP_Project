@@ -7,7 +7,9 @@ public final class Employee {
 	private final EmployeeNumber employeeNumber;
 	private final String name;
 	private final LocalDate birthDate;
+	private final Gender gender;
 	private final String phone;
+	private final String address;
 	private final LocalDate hireDate;
 	private final EmploymentType employmentType;
 	private final long workplaceId;
@@ -16,13 +18,18 @@ public final class Employee {
 	private final LocalDate probationEndDate;
 	private final ForeignWorkerDetails foreignWorkerDetails;
 
-	public Employee(EmployeeNumber employeeNumber, String name, LocalDate birthDate, String phone,
+	public Employee(EmployeeNumber employeeNumber, String name, LocalDate birthDate, Gender gender, String phone,
+		String address,
 		LocalDate hireDate, EmploymentType employmentType, long workplaceId, long departmentId,
 		String position, LocalDate probationEndDate, ForeignWorkerDetails foreignWorkerDetails) {
 		this.employeeNumber = require(employeeNumber, "Employee number");
 		this.name = requireText(name, "Name");
 		this.birthDate = require(birthDate, "Birth date");
+		this.gender = require(gender, "Gender");
+		if (gender == Gender.UNSPECIFIED) throw new IllegalArgumentException("Gender must be specified");
 		this.phone = requireText(phone, "Phone");
+		this.address = requireText(address, "Address");
+		if (this.address.length() > 500) throw new IllegalArgumentException("Address is too long");
 		this.hireDate = require(hireDate, "Hire date");
 		this.employmentType = require(employmentType, "Employment type");
 		if (workplaceId <= 0 || departmentId <= 0) {
@@ -41,7 +48,9 @@ public final class Employee {
 	public EmployeeNumber employeeNumber() { return employeeNumber; }
 	public String name() { return name; }
 	public LocalDate birthDate() { return birthDate; }
+	public Gender gender() { return gender; }
 	public String phone() { return phone; }
+	public String address() { return address; }
 	public LocalDate hireDate() { return hireDate; }
 	public EmploymentType employmentType() { return employmentType; }
 	public long workplaceId() { return workplaceId; }

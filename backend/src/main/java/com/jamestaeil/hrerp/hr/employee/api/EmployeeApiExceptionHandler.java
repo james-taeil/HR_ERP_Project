@@ -9,6 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import com.jamestaeil.hrerp.hr.employee.application.EmployeeNumberExhaustedException;
 import com.jamestaeil.hrerp.hr.employee.application.EmployeeBulkConflictException;
+import com.jamestaeil.hrerp.hr.employee.application.WorkerRosterIncompleteException;
 import com.jamestaeil.hrerp.platform.port.PlatformIntegrationUnavailableException;
 import com.jamestaeil.hrerp.platform.port.EmployeeRegistrationForbiddenException;
 import com.jamestaeil.hrerp.platform.port.OrganizationValidationException;
@@ -30,6 +31,12 @@ public class EmployeeApiExceptionHandler {
 	@ExceptionHandler(EmployeeBulkConflictException.class)
 	ResponseEntity<ApiError> bulkConflict() {
 		return response(HttpStatus.CONFLICT, "BULK_REGISTRATION_CONFLICT", "Bulk registration cannot be confirmed");
+	}
+
+	@ExceptionHandler(WorkerRosterIncompleteException.class)
+	ResponseEntity<ApiError> rosterIncomplete(WorkerRosterIncompleteException exception) {
+		return response(HttpStatus.CONFLICT, "WORKER_ROSTER_INCOMPLETE",
+			"Worker roster is missing required fields: " + String.join(", ", exception.missingFields()));
 	}
 
 	@ExceptionHandler(PlatformIntegrationUnavailableException.class)

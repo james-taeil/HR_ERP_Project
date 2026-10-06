@@ -1,0 +1,4 @@
+ALTER TABLE employees
+    ADD COLUMN gender VARCHAR(20) NOT NULL DEFAULT 'UNSPECIFIED' AFTER birth_date,
+    ADD COLUMN address VARCHAR(500) NOT NULL DEFAULT '' AFTER phone,
+    ADD CONSTRAINT chk_employees_gender CHECK (gender IN ('MALE', 'FEMALE', 'UNSPECIFIED'));

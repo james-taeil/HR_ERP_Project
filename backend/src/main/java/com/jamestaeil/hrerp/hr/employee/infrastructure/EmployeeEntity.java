@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import com.jamestaeil.hrerp.hr.employee.domain.Employee;
 import com.jamestaeil.hrerp.hr.employee.domain.EmploymentType;
+import com.jamestaeil.hrerp.hr.employee.domain.Gender;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,7 +23,10 @@ public class EmployeeEntity {
 	private String employeeNumber;
 	private String employeeName;
 	private LocalDate birthDate;
+	@Enumerated(EnumType.STRING)
+	private Gender gender;
 	private String phone;
+	private String address;
 	private LocalDate hireDate;
 	@Enumerated(EnumType.STRING)
 	private EmploymentType employmentType;
@@ -40,7 +44,9 @@ public class EmployeeEntity {
 		this.employeeNumber = employee.employeeNumber().value();
 		this.employeeName = employee.name();
 		this.birthDate = employee.birthDate();
+		this.gender = employee.gender();
 		this.phone = employee.phone();
+		this.address = employee.address();
 		this.hireDate = employee.hireDate();
 		this.employmentType = employee.employmentType();
 		this.workplaceId = employee.workplaceId();
