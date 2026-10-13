@@ -46,4 +46,21 @@ public final class AesGcmSensitiveValueCipher implements SensitiveValueCipher {
 			throw new IllegalStateException("Sensitive value encryption failed", exception);
 		}
 	}
+
+	@Override
+	public String decrypt(byte[] ciphertext) {
+		if (ciphertext == null || ciphertext.length <= NONCE_LENGTH) throw new IllegalArgumentException("Ciphertext is required");
+		try {
+			byte[] key = Base64.getDecoder().decode(encodedKey);
+			if (key.length != 32) throw new IllegalStateException("A 256-bit sensitive data key is required");
+			ByteBuffer input = ByteBuffer.wrap(ciphertext);
+			byte[] nonce = new byte[NONCE_LENGTH]; input.get(nonce);
+			byte[] encrypted = new byte[input.remaining()]; input.get(encrypted);
+			Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+			cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new GCMParameterSpec(128, nonce));
+			return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
+		} catch (IllegalArgumentException | GeneralSecurityException exception) {
+			throw new IllegalStateException("Sensitive value decryption failed", exception);
+		}
+	}
 }

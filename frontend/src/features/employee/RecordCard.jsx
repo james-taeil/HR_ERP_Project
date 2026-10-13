@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { buildRecordPayload, recordError, recordSections } from './recordForm.js'
+import SensitiveDataPanel from './SensitiveDataPanel.jsx'
 
 async function request(url, options) {
   const response = await fetch(url, options)
@@ -128,6 +129,7 @@ export default function RecordCard() {
           ['외국인 여부', card.employee.foreignWorker ? '예' : '아니요'],
         ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
       </section>
+      <SensitiveDataPanel employeeId={card.employee.id} />
       {recordSections.map(section => <RecordSection key={section.key} section={section}
         entries={card[section.key]} employeeId={card.employee.id} refresh={() => load(card.employee.id, true)} />)}
       <section><h2>발령 이력</h2>{card.appointments.length === 0 ? <p>등록된 발령이 없습니다.</p> :

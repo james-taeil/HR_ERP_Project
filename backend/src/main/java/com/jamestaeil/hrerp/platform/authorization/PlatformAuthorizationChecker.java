@@ -46,6 +46,11 @@ class PlatformAuthorizationChecker implements AuthorizationChecker {
 		requireEmployeeAccess(actorId, PermissionCode.HR_LIFECYCLE_WRITE, employeeId);
 	}
 
+	@Override
+	public void checkCanReadSensitiveRecord(long actorId, long employeeId) {
+		requireEmployeeAccess(actorId, PermissionCode.HR_RECORD_SENSITIVE_READ, employeeId);
+	}
+
 	private void requireEmployeeAccess(long actorId, PermissionCode permission, long employeeId) {
 		if (!authorization.canAccessEmployee(actorId, permission, employeeId)) {
 			throw new RecordAccessForbiddenException();

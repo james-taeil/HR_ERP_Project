@@ -1,6 +1,7 @@
 package com.jamestaeil.hrerp.platform.infrastructure;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.charset.StandardCharsets;
@@ -14,6 +15,7 @@ class AesGcmSensitiveValueCipherTest {
 		String key = Base64.getEncoder().encodeToString(new byte[32]);
 		byte[] encrypted = new AesGcmSensitiveValueCipher(key).encrypt("123456-1234567");
 		assertFalse(new String(encrypted, StandardCharsets.UTF_8).contains("123456"));
+		assertEquals("123456-1234567", new AesGcmSensitiveValueCipher(key).decrypt(encrypted));
 	}
 
 	@Test
