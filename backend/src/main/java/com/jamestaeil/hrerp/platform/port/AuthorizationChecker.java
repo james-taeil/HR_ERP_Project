@@ -18,4 +18,8 @@ public interface AuthorizationChecker {
     default void checkCanWriteLifecycle(long actorId, long employeeId) {
         throw new PlatformIntegrationUnavailableException();
     }
+
+    default void checkCanReadSensitiveRecord(long actorId, long employeeId) {
+        throw new PlatformIntegrationUnavailableException();
+    }
 }

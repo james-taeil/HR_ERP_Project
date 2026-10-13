@@ -331,3 +331,15 @@ FR-001의 등록과 체크리스트, FR-038의 이벤트는 같은 트랜잭션�
 - 프론트엔드는 기간을 입력받아 기준일·재직자 수·분포·추이를 표로 표시한다.
 
 근거: FR-028, AC-028, P-5, P-7.
+
+## 22. 주민등록번호·계좌번호 보호
+
+- `employee_sensitive_data`는 사원별 주민등록번호와 계좌번호를 AES-256-GCM 암호문과 마스킹 값으로만 저장한다.
+- `PUT/GET /api/hr/employees/{employeeId}/sensitive-data`는 `HR_RECORD_WRITE/READ`와 조직 범위를 검사하며
+  쓰기 응답과 일반 조회에는 마스킹 값만 반환한다.
+- `POST /api/hr/employees/{employeeId}/sensitive-data/reveals`는 `HR_RECORD_SENSITIVE_READ`와 조직 범위를
+  추가 검사하고 500자 이하 조회 사유를 필수로 받는다. 응답은 `no-store`이며 원문을 로그·예외에 포함하지 않는다.
+- 원문 조회 성공과 같은 트랜잭션에서 조회자·대상자·시각·사유를 `sensitive_access_audits`에 추가한다.
+  데이터베이스 트리거로 감사 행의 수정과 삭제를 거부한다.
+
+근거: FR-029~031, AC-029~031, P-5, P-6, NFR-005~007.
